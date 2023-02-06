@@ -6,7 +6,6 @@ use piston::{
     AdvancedWindow, Events, RenderArgs, RenderEvent, UpdateArgs, UpdateEvent, WindowSettings,
 };
 
-
 pub trait Entity {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;

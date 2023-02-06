@@ -1,7 +1,8 @@
 use glutin_window::GlutinWindow as Window;
+use graphics::Context;
 use opengl_graphics::{GlGraphics, OpenGL};
 use piston::{Events, RenderEvent, UpdateEvent, WindowSettings};
-use std::{any::Any, ops::IndexMut};
+use std::any::Any;
 
 pub use piston::{RenderArgs, UpdateArgs};
 
@@ -12,22 +13,42 @@ pub trait Entity {
     fn as_any_mut(&mut self) -> &mut dyn Any;
 }
 
+pub struct Renderer<'a> {
+    ctx: Context,
+    gl: &'a mut GlGraphics,
+    entities: &'a mut Vec<&'a mut dyn Entity>,
+    args: &'a RenderArgs,
+}
+
+pub struct Updater<'a> {
+    entities: &'a mut Vec<&'a mut dyn Entity>,
+    args: &'a UpdateArgs,
+}
+
 pub struct GameBuilder<'a> {
     title: &'a str,
     size: (f64, f64),
-    background_color: Option<Color>,
 
     // OpenGL drawing backend
     gl_version: OpenGL,
     gl_ctx: Option<GlGraphics>,
 
-    entities: Vec<&'a dyn Entity>,
+    entities: Vec<&'a mut dyn Entity>,
 
     // Render function
-    render_fn: Option<fn(ctx: &mut dyn Any, entities: &mut Vec<&'a dyn Entity>, args: &RenderArgs)>,
+    render_fn: Option<
+        fn(
+            ctx: Context,
+            gl: &mut GlGraphics,
+            obj: &mut dyn Any,
+            entities: &mut Vec<&'a mut dyn Entity>,
+            args: &RenderArgs,
+        ),
+    >,
 
     // Update function
-    update_fn: Option<fn(ctx: &mut dyn Any, entities: &mut Vec<&'a dyn Entity>, args: &UpdateArgs)>,
+    update_fn:
+        Option<fn(obj: &mut dyn Any, entities: &mut Vec<&'a mut dyn Entity>, args: &UpdateArgs)>,
 
     game_ctx: &'a mut dyn Any,
 }
@@ -41,7 +62,6 @@ impl<'a> GameBuilder<'a> {
         Self {
             title,
             size,
-            background_color: None,
             gl_version,
             gl_ctx: None,
             entities,
@@ -51,29 +71,31 @@ impl<'a> GameBuilder<'a> {
         }
     }
 
-    pub fn set_background_color(&mut self, color: Color) {
-        self.background_color = Some(color);
-    }
-
     // TODO: implement entity ids? (or just use vec idx)
-    pub fn add_entity(&mut self, entity: &'a dyn Entity) {
+    pub fn add_entity(&mut self, entity: &'a mut dyn Entity) {
         self.entities.push(entity);
     }
 
-    pub fn add_entities(&mut self, entities: &mut Vec<&'a dyn Entity>) {
+    pub fn add_entities(&mut self, entities: &mut Vec<&'a mut dyn Entity>) {
         self.entities.append(entities);
     }
 
     pub fn set_render_fn(
         &mut self,
-        f: fn(ctx: &mut dyn Any, entities: &mut Vec<&dyn Entity>, args: &RenderArgs),
+        f: fn(
+            ctx: Context,
+            gl: &mut GlGraphics,
+            obj: &mut dyn Any,
+            entities: &mut Vec<&mut dyn Entity>,
+            args: &RenderArgs,
+        ),
     ) {
         self.render_fn = Some(f);
     }
 
     pub fn set_update_fn(
         &mut self,
-        f: fn(ctx: &mut dyn Any, entities: &mut Vec<&dyn Entity>, args: &UpdateArgs),
+        f: fn(obj: &mut dyn Any, entities: &mut Vec<&mut dyn Entity>, args: &UpdateArgs),
     ) {
         self.update_fn = Some(f);
     }
@@ -95,7 +117,12 @@ impl<'a> GameBuilder<'a> {
         while let Some(event) = events.next(&mut window) {
             if let Some(args) = event.render_args() {
                 // TODO: Make sure render_fn is set first
-                self.render_fn.unwrap()(self.game_ctx, &mut self.entities, &args);
+                self.gl_ctx
+                    .as_mut()
+                    .unwrap()
+                    .draw(args.viewport(), |c, gl| {
+                        self.render_fn.unwrap()(c, gl, self.game_ctx, &mut self.entities, &args);
+                    });
             }
 
             if let Some(args) = event.update_args() {
@@ -105,25 +132,11 @@ impl<'a> GameBuilder<'a> {
         }
     }
 
-    pub fn convert_entity<T: 'a>(entities: Vec<&'a dyn Entity>, entity_id: usize) -> &'static T {
-        entities[entity_id].as_any().downcast_ref::<&T>().unwrap()
-    }
-
-    pub fn convert_entity_mut<T: 'a>(
-        mut entities: Vec<&'a dyn Entity>,
-        entity_id: usize,
-    ) -> &'static T {
-        entities[entity_id]
-            .as_any_mut()
-            .downcast_ref::<&T>()
-            .unwrap()
-    }
-
     pub fn size(&self) -> (f64, f64) {
         self.size
     }
 
-    pub fn entities(&self) -> &Vec<&dyn Entity> {
-        &self.entities
+    pub fn entities(&mut self) -> &mut Vec<&'a mut dyn Entity> {
+        &mut self.entities
     }
 }
