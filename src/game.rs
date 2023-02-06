@@ -8,21 +8,11 @@ pub use piston::{RenderArgs, UpdateArgs};
 
 pub type Color = [f32; 4];
 
+pub type Entities<'a> = Vec<&'a mut dyn Entity>;
+
 pub trait Entity {
     fn as_any(&self) -> &dyn Any;
     fn as_any_mut(&mut self) -> &mut dyn Any;
-}
-
-pub struct Renderer<'a> {
-    ctx: Context,
-    gl: &'a mut GlGraphics,
-    entities: &'a mut Vec<&'a mut dyn Entity>,
-    args: &'a RenderArgs,
-}
-
-pub struct Updater<'a> {
-    entities: &'a mut Vec<&'a mut dyn Entity>,
-    args: &'a UpdateArgs,
 }
 
 pub struct GameBuilder<'a> {
@@ -40,15 +30,14 @@ pub struct GameBuilder<'a> {
         fn(
             ctx: Context,
             gl: &mut GlGraphics,
-            obj: &mut dyn Any,
-            entities: &mut Vec<&'a mut dyn Entity>,
+            game_obj: &mut dyn Any,
+            entities: &mut Entities,
             args: &RenderArgs,
         ),
     >,
 
     // Update function
-    update_fn:
-        Option<fn(obj: &mut dyn Any, entities: &mut Vec<&'a mut dyn Entity>, args: &UpdateArgs)>,
+    update_fn: Option<fn(game_obj: &mut dyn Any, entities: &mut Entities, args: &UpdateArgs)>,
 
     game_ctx: &'a mut dyn Any,
 }
@@ -76,7 +65,7 @@ impl<'a> GameBuilder<'a> {
         self.entities.push(entity);
     }
 
-    pub fn add_entities(&mut self, entities: &mut Vec<&'a mut dyn Entity>) {
+    pub fn add_entities(&mut self, entities: &mut Entities<'a>) {
         self.entities.append(entities);
     }
 
@@ -85,7 +74,7 @@ impl<'a> GameBuilder<'a> {
         f: fn(
             ctx: Context,
             gl: &mut GlGraphics,
-            obj: &mut dyn Any,
+            game_obj: &mut dyn Any,
             entities: &mut Vec<&mut dyn Entity>,
             args: &RenderArgs,
         ),
@@ -95,7 +84,7 @@ impl<'a> GameBuilder<'a> {
 
     pub fn set_update_fn(
         &mut self,
-        f: fn(obj: &mut dyn Any, entities: &mut Vec<&mut dyn Entity>, args: &UpdateArgs),
+        f: fn(game_obj: &mut dyn Any, entities: &mut Vec<&mut dyn Entity>, args: &UpdateArgs),
     ) {
         self.update_fn = Some(f);
     }

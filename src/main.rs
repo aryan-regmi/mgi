@@ -1,7 +1,7 @@
 use std::any::Any;
 
 use graphics::Context;
-use mgi::game::{Color, Entity, GameBuilder, RenderArgs, UpdateArgs};
+use mgi::game::{Color, Entities, Entity, GameBuilder, RenderArgs, UpdateArgs};
 use opengl_graphics::GlGraphics;
 
 struct SpinningBox {
@@ -41,9 +41,9 @@ impl Game {
         }
     }
 
-    fn update(obj: &mut dyn Any, entities: &mut Vec<&mut dyn Entity>, args: &UpdateArgs) {
+    fn update(game_obj: &mut dyn Any, entities: &mut Entities, args: &UpdateArgs) {
         // Convert ctx to Self
-        let this: &mut Self = obj.downcast_mut().unwrap();
+        let this: &mut Self = game_obj.downcast_mut().unwrap();
 
         // Convert entity into SpinningBox
         let spinning: &mut SpinningBox = entities[0].as_any_mut().downcast_mut().unwrap();
@@ -55,14 +55,14 @@ impl Game {
     fn render(
         ctx: Context,
         gl: &mut GlGraphics,
-        obj: &mut dyn Any,
-        entities: &mut Vec<&mut dyn Entity>,
+        game_obj: &mut dyn Any,
+        entities: &mut Entities,
         args: &RenderArgs,
     ) {
         use graphics::*;
 
         // Convert ctx to Self
-        let this: &mut Self = obj.downcast_mut().unwrap();
+        let this: &mut Self = game_obj.downcast_mut().unwrap();
 
         // Update the width and height
         this.width = args.window_size[0];
@@ -91,7 +91,7 @@ fn main() {
     let mut game_builder = GameBuilder::init("Test", size, game);
 
     let mut spin = SpinningBox {
-        position: (game_builder.size().0 / 2.0, game_builder.size().1 / 2.0),
+        position: (size.0 / 2.0, size.1 / 2.0),
         velocity: (0.0, 0.0),
         rotation: 0.0,
         color: [1.0, 0.0, 0.0, 1.0],
