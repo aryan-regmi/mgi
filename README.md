@@ -6,7 +6,7 @@ A game framework built using SDL2 and OpenGL (uses the `sdl2` crate) for Rust.
 
 ```rust
 
-use super::{BaseGame, Canvas, Color, Event, GameBuilder, Keycode, Window, WindowConfig};
+use mgi::prelude::*;
 use std::error::Error;
 
 struct TestGame {
