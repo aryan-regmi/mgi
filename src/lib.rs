@@ -1,8 +1,16 @@
-use std::time::Duration;
+pub mod prelude {
+    pub use crate::{BaseGame, Entity, GameBuilder, WindowConfig};
+    pub use sdl2::{event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
+}
 
-use sdl2::Sdl;
+pub use prelude::*;
 
 pub use sdl2::{event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
+use sdl2::{
+    video::{WindowBuildError, WindowBuilder},
+    Sdl, VideoSubsystem,
+};
+use std::time::Duration;
 
 fn find_sdl_gl_driver() -> Option<u32> {
     for (index, item) in sdl2::render::drivers().enumerate() {
@@ -35,6 +43,47 @@ pub trait Entity {
     }
 }
 
+pub struct WindowConfig {
+    pub position: Option<(i32, i32)>,
+    pub fullscreen: bool,
+    pub borderless: bool,
+    pub resizeable: bool,
+    pub centered: bool,
+}
+
+impl WindowConfig {
+    fn build(
+        self,
+        video_sys: &VideoSubsystem,
+        title: &str,
+        width: u32,
+        height: u32,
+    ) -> Result<Window, WindowBuildError> {
+        let mut window_builder = &mut WindowBuilder::new(&video_sys, title, width, height);
+
+        if self.fullscreen {
+            window_builder = window_builder.fullscreen_desktop();
+        }
+        if self.borderless {
+            window_builder = window_builder.borderless();
+        }
+        if self.resizeable {
+            window_builder = window_builder.resizable();
+        }
+        if self.centered {
+            window_builder = window_builder.position_centered();
+        }
+
+        if let Some(pos) = self.position {
+            if (self.fullscreen == false) && (self.centered == false) {
+                window_builder = window_builder.position(pos.0, pos.1);
+            }
+        };
+
+        window_builder.build()
+    }
+}
+
 pub struct GameBuilder<'a> {
     #[allow(dead_code)]
     size: (u32, u32),
@@ -48,15 +97,26 @@ pub struct GameBuilder<'a> {
 
 impl<'a> GameBuilder<'a> {
     // TODO: Proper error handling!!
-    pub fn init(title: &str, width: u32, height: u32, game_obj: &'a mut dyn BaseGame) -> Self {
+    pub fn init(
+        title: &str,
+        width: u32,
+        height: u32,
+        game_obj: &'a mut dyn BaseGame,
+        window_config: WindowConfig,
+    ) -> Self {
         // Initialize SDL
         let sdl_ctx = sdl2::init().unwrap();
         let video_sys = sdl_ctx.video().unwrap();
-        let window = video_sys
-            .window(title, width, height)
-            .opengl()
-            .build()
-            .unwrap();
+        // FIX: Propagate errors
+        let window = window_config
+            .build(&video_sys, title, width, height)
+            .expect("Invalid window configuration");
+
+        // let window = video_sys
+        //     .window(title, width, height)
+        //     .opengl()
+        //     .build()
+        //     .unwrap();
 
         Self {
             size: (width, height),
@@ -97,7 +157,7 @@ impl<'a> GameBuilder<'a> {
 
 #[cfg(test)]
 mod tests {
-    use super::{BaseGame, Canvas, Color, Event, GameBuilder, Keycode, Window};
+    use super::{BaseGame, Canvas, Color, Event, GameBuilder, Keycode, Window, WindowConfig};
     use std::error::Error;
 
     struct TestGame {
@@ -140,7 +200,20 @@ mod tests {
         const WIDTH: u32 = 1280;
         const HEIGHT: u32 = 720;
 
-        GameBuilder::init("TEST", WIDTH, HEIGHT, &mut TestGame::init()).run();
+        GameBuilder::init(
+            "TEST",
+            WIDTH,
+            HEIGHT,
+            &mut TestGame::init(),
+            WindowConfig {
+                position: None,
+                fullscreen: false,
+                borderless: false,
+                resizeable: false,
+                centered: true,
+            },
+        )
+        .run();
 
         Ok(())
     }
