@@ -1,3 +1,5 @@
+mod tiles;
+
 pub mod prelude {
     pub use crate::{BaseGame, Entity, GameBuilder, WindowConfig};
     pub use sdl2::{event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
@@ -157,25 +159,63 @@ impl<'a> GameBuilder<'a> {
 
 #[cfg(test)]
 mod tests {
+    use crate::tiles::Texture;
+
+    use super::tiles::{Tile, TileMap};
     use super::{BaseGame, Canvas, Color, Event, GameBuilder, Keycode, Window, WindowConfig};
     use std::error::Error;
 
     struct TestGame {
         running: bool,
+        tilemap: TileMap,
     }
 
     impl TestGame {
         pub fn init() -> Self {
-            Self { running: true }
+            // TODO: Clamp map size by window_size / tile_size: width/tile_size.0,
+            // height/tile_size.1
+            let map_size = (25, 25);
+            let tile_size = (32, 32);
+
+            let mut tilemap = TileMap::init(map_size.0, map_size.1, tile_size.0, tile_size.1);
+
+            tilemap.insert_tile(Tile::init(0, 0, Texture { color: Color::RED }));
+
+            let mut tiles = Vec::with_capacity((map_size.0 * map_size.1) as usize);
+            for i in 0..map_size.0 {
+                for j in 0..map_size.1 {
+                    if i == 0 && j == 0 {
+                        continue;
+                    }
+                    tiles.push(Tile::init(
+                        (tile_size.0 * i) as i32,
+                        (tile_size.1 * j) as i32,
+                        Texture { color: Color::GRAY },
+                    ));
+                }
+            }
+            tilemap.insert_tiles(tiles);
+
+            Self {
+                running: true,
+                tilemap,
+            }
         }
     }
 
     impl BaseGame for TestGame {
-        fn update(&mut self) {}
+        fn update(&mut self) {
+            // TODO: If mouse is in tile, change it's color
+            for tile in self.tilemap.tiles() {
+                if tile.x() >= 400 && tile.y() >= 400 && tile.x() <= 450 && tile.y() <= 450 {
+                    tile.texture().color = Color::BLUE;
+                }
+            }
+        }
 
         fn render(&mut self, canvas: &mut Canvas<Window>) {
-            canvas.set_draw_color(Color::WHITE);
-            canvas.clear();
+            self.tilemap.generate(canvas);
+
             canvas.present();
         }
 
@@ -197,8 +237,10 @@ mod tests {
 
     #[test]
     fn run_game() -> Result<(), Box<dyn Error>> {
-        const WIDTH: u32 = 1280;
-        const HEIGHT: u32 = 720;
+        // const WIDTH: u32 = 1280;
+        // const HEIGHT: u32 = 720;
+        const WIDTH: u32 = 800;
+        const HEIGHT: u32 = 800;
 
         GameBuilder::init(
             "TEST",
