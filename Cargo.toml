@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 thiserror = "1.0.38"
-sdl2 = "0.35.2"
+sdl2 = { version =  "0.35.2", features = ["image", "ttf"] }
+lazy_static = "1.4.0"
