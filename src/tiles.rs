@@ -6,35 +6,19 @@ use sdl2::{image::LoadTexture, pixels::Color, rect::Rect, render::Canvas, video:
 
 use crate::Drawable;
 
-trait TileMapType {}
-
-pub struct Texture {
-    filepath: String,
-}
-
-impl Texture {
-    pub fn new(path: &str) -> Self {
-        Self {
-            filepath: path.into(),
-        }
-    }
-}
-
-pub struct TileSet(HashMap<u32, (Texture, Option<String>)>);
-impl TileMapType for TileSet {}
-impl TileSet {
+/// Stores a texture's path and name.
+pub struct TileSet<'a>(HashMap<&'a str, &'a str>);
+impl<'a> TileSet<'a> {
     pub fn new() -> Self {
         Self(HashMap::new())
     }
 
-    // TODO: Make this take an enum and texture instead
-    pub fn add_tile_type(&mut self, id: u32, texture: Texture, tile_type_name: Option<String>) {
-        self.0.insert(id, (texture, tile_type_name));
+    pub fn add_tile_type(&mut self, tile_type_name: &'a str, texture_path: &'a str) {
+        self.0.insert(tile_type_name, texture_path);
     }
 }
 
 pub struct TextureAtlas;
-impl TileMapType for TextureAtlas {}
 
 pub struct Tile {
     // Row of tile map for tile
@@ -47,25 +31,30 @@ pub struct Tile {
     texture_idx: u32,
 }
 
-pub struct TileMap<Texture> {
-    // Number of rows in tilemap
+pub struct TileMap<TextureType> {
+    /// Number of rows in tilemap
     rows: u32,
 
-    // Number of columns in tilemap
+    /// Number of columns in tilemap
     cols: u32,
 
-    // Size of a single tile
+    /// Size of a single tile
     tile_size: (u32, u32),
 
-    // All the tiles in the map
+    /// All the tiles in the map
     tiles: Vec<Tile>,
 
-    // Type of the texture for the map
-    texture: Texture,
+    /// Type of the texture for the map
+    texture: TextureType,
 }
 
-impl<'a> TileMap<TileSet> {
-    pub fn from_tileset(rows: u32, cols: u32, tile_size: (u32, u32), tile_set: TileSet) -> Self {
+impl<'a> TileMap<TileSet<'a>> {
+    pub fn from_tileset(
+        rows: u32,
+        cols: u32,
+        tile_size: (u32, u32),
+        tile_set: TileSet<'a>,
+    ) -> Self {
         Self {
             rows,
             cols,
@@ -93,8 +82,10 @@ impl TileMap<TextureAtlas> {
     }
 }
 
-impl<T: TileMapType> Drawable for TileMap<T> {
+impl<'a> Drawable for TileMap<TileSet<'a>> {
     fn setup(&mut self, canvas: &mut Canvas<Window>) {
+        // Load all textures
+
         todo!()
     }
 
@@ -103,6 +94,6 @@ impl<T: TileMapType> Drawable for TileMap<T> {
     }
 
     fn render(&mut self, canvas: &mut Canvas<Window>) {
-        for tile in &self.tiles {}
+        todo!()
     }
 }
