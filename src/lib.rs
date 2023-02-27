@@ -1,7 +1,7 @@
-mod tiles;
+pub mod tiles;
 
 pub mod prelude {
-    pub use crate::{Entity, GameBuilder, WindowConfig};
+    pub use crate::{tiles, Entity, GameBuilder, WindowConfig};
     pub use sdl2::{event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
 }
 
@@ -133,6 +133,10 @@ impl<'a> GameBuilder<'a> {
 
             game_obj,
         }
+    }
+
+    pub fn get_canvas(&self) -> &Canvas<Window> {
+        &self.canvas
     }
 
     pub fn run(&mut self) {

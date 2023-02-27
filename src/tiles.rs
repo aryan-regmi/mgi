@@ -2,19 +2,31 @@
 
 use std::{collections::HashMap, path::Path};
 
-use sdl2::{image::LoadTexture, pixels::Color, rect::Rect, render::Canvas, video::Window};
+use sdl2::{
+    image::LoadTexture,
+    pixels::Color,
+    rect::Rect,
+    render::{Canvas, Texture},
+    video::Window,
+};
 
 use crate::Drawable;
 
 /// Stores a texture's path and name.
-pub struct TileSet<'a>(HashMap<&'a str, &'a str>);
+pub struct TileSet<'a> {
+    canvas: &'a Canvas<Window>,
+    textures: HashMap<&'a str, &'a str>,
+}
 impl<'a> TileSet<'a> {
-    pub fn new() -> Self {
-        Self(HashMap::new())
+    pub fn new(canvas: &'a Canvas<Window>) -> Self {
+        Self {
+            canvas,
+            textures: HashMap::new(),
+        }
     }
 
     pub fn add_tile_type(&mut self, tile_type_name: &'a str, texture_path: &'a str) {
-        self.0.insert(tile_type_name, texture_path);
+        self.textures.insert(tile_type_name, texture_path);
     }
 }
 
@@ -45,7 +57,7 @@ pub struct TileMap<TextureType> {
     tiles: Vec<Tile>,
 
     /// Type of the texture for the map
-    texture: TextureType,
+    texture_type: TextureType,
 }
 
 impl<'a> TileMap<TileSet<'a>> {
@@ -60,7 +72,7 @@ impl<'a> TileMap<TileSet<'a>> {
             cols,
             tile_size,
             tiles: Vec::with_capacity((rows * cols) as usize),
-            texture: tile_set,
+            texture_type: tile_set,
         }
     }
 }
@@ -77,23 +89,27 @@ impl TileMap<TextureAtlas> {
             cols,
             tile_size,
             tiles: Vec::with_capacity((rows * cols) as usize),
-            texture: texture_atlas,
+            texture_type: texture_atlas,
         }
     }
 }
 
 impl<'a> Drawable for TileMap<TileSet<'a>> {
     fn setup(&mut self, canvas: &mut Canvas<Window>) {
-        // Load all textures
+        // TODO: Load all textures
+        let texture_creator = canvas.texture_creator();
+        for tile_filepath in self.texture_type.textures.values() {
+            let texture = texture_creator
+                .load_texture(tile_filepath)
+                .expect("Unable to load texture"); // TODO: Proper error handling
+        }
 
-        todo!()
+        // TODO: Create `Tile`s for the tilemap
     }
 
-    fn update(&mut self) {
-        todo!()
-    }
+    fn update(&mut self) {}
 
     fn render(&mut self, canvas: &mut Canvas<Window>) {
-        todo!()
+        // TODO: Copy tile textures into correct tiles
     }
 }
