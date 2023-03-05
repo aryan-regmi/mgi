@@ -11,7 +11,7 @@ impl Drawable for MyGame {
         let color = [0xff, 0x00, 0x00, 0xff];
 
         for mut pixel in renderer.pixels_mut() {
-            pixel.set_color(color);
+            pixel.set_color(color.into());
         }
     }
 }

@@ -3,8 +3,10 @@ name = "mgi"
 version = "0.1.0"
 edition = "2021"
 
+[dev-dependencies]
+rand = "0.8.5"
+
 [dependencies]
 pixels = "0.11.0"
-rand = "0.8.5"
 winit = "0.28.2"
 winit_input_helper = "0.14.0"

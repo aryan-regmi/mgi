@@ -1,5 +1,4 @@
 use mgi::prelude::*;
-use rand::{thread_rng, Rng};
 
 struct MyGame {
     running: bool,
@@ -9,15 +8,13 @@ impl Drawable for MyGame {
     fn update(&mut self) {}
 
     fn render(&mut self, renderer: &mut Renderer) {
-        let mut rng = thread_rng();
+        renderer.clear_color(Rgba::new(255, 255, 255, 1.0).unwrap());
 
-        for i in 200..600 {
-            for j in 200..600 {
-                let color: [u8; 4] = rng.gen();
+        let color = Rgba::new(255, 0, 0, 1.0).unwrap();
+        renderer.draw_line((0., 0.), (400., 400.), color);
 
-                renderer.draw_pixel(i as f32, j as f32, color.into());
-            }
-        }
+        let color = Rgba::new(0, 0, 255, 1.0).unwrap();
+        renderer.draw_line((0., 800.), (400., 400.), color);
     }
 }
 
