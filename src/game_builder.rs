@@ -1,4 +1,3 @@
-use pixels::{Pixels, SurfaceTexture};
 use winit::dpi::PhysicalSize;
 use winit::event::Event;
 use winit::event_loop::ControlFlow;
@@ -6,19 +5,18 @@ use winit::window::Fullscreen;
 use winit::{event_loop::EventLoop, window::WindowBuilder};
 use winit_input_helper::WinitInputHelper;
 
+use crate::renderer::Renderer;
+
 pub trait Drawable {
     fn update(&mut self);
-    fn render(&mut self, pixels: &mut Pixels);
+    fn render(&mut self, renderer: &mut Renderer);
 }
 
-pub trait EventHandler {
-    fn handle_events(&mut self, event: &WinitInputHelper, cf: &mut ControlFlow);
-}
-
-pub trait Game: Drawable + EventHandler + 'static {
+pub trait Game: Drawable + 'static {
     fn setup() -> Self;
     fn is_running(&self) -> bool;
     fn stop(&mut self);
+    fn handle_events(&mut self, event: &WinitInputHelper, cf: &mut ControlFlow);
 }
 
 pub struct GameBuilder<T: Game> {
@@ -27,6 +25,7 @@ pub struct GameBuilder<T: Game> {
     resizeable: bool,
     fullscreen: bool,
     event_loop: EventLoop<()>,
+    renderer: Option<Renderer>,
     game_obj: T,
 }
 
@@ -38,6 +37,7 @@ impl<T: Game> GameBuilder<T> {
             resizeable: false,
             fullscreen: false,
             event_loop: EventLoop::new(),
+            renderer: None,
             game_obj: T::setup(),
         }
     }
@@ -69,12 +69,8 @@ impl<T: Game> GameBuilder<T> {
         if self.fullscreen {
             window.set_fullscreen(Some(Fullscreen::Borderless(None)));
         }
-        let mut pixels = {
-            let window_size = window.inner_size();
-            let surface_texture =
-                SurfaceTexture::new(window_size.width, window_size.height, &window);
-            Pixels::new(size.0, size.1, surface_texture).unwrap() // TODO: Proper error handling
-        };
+
+        self.renderer = Some(Renderer::new(&window));
 
         // Game loop
         let mut input = WinitInputHelper::new();
@@ -97,8 +93,10 @@ impl<T: Game> GameBuilder<T> {
 
             // Render the game
             if let Event::RedrawRequested(_) = event {
-                self.game_obj.render(&mut pixels);
-                if let Err(_) = pixels.render() {
+                let renderer = self.renderer.as_mut().unwrap();
+
+                self.game_obj.render(renderer);
+                if let Err(_) = renderer.pixels.render() {
                     *control_flow = ControlFlow::Exit;
                     return;
                 }
