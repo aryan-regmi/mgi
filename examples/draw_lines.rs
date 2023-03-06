@@ -43,7 +43,7 @@ impl Game for MyGame {
 }
 
 fn main() {
-    GameBuilder::<MyGame>::init("Draw Point")
+    GameBuilder::<MyGame>::init("Draw Lines")
         .set_size(800, 800)
         .run();
 }

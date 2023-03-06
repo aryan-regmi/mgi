@@ -10,13 +10,13 @@ impl Drawable for MyGame {
     fn render(&mut self, renderer: &mut Renderer) {
         renderer.clear_color([255, 255, 255, 255].into());
 
-        let color = Rgba::new(255, 0, 0, 1.0).unwrap();
-        let mut rect = Rect::new(350., 400., 100., 200.);
-        rect.rotate(Rotation::Degrees(90.));
-        renderer.draw_rect(rect, color);
-
         let color = Rgba::new(0, 0, 255, 1.0).unwrap();
         renderer.draw_rect(Rect::new(300., 0., 200., 200.), color);
+
+        let color = Rgba::new(255, 0, 0, 1.0).unwrap();
+        let mut rect = Rect::new(300., 350., 200., 100.);
+        rect.rotate(Rotation::Degrees(45.));
+        renderer.draw_rect(rect, color);
     }
 }
 

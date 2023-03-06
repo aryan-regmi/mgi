@@ -32,10 +32,6 @@ impl Rotation {
     }
 }
 
-pub(crate) fn float_eql(a: f32, b: f32, tol: f32) -> bool {
-    (a - b).abs() <= tol
-}
-
 #[derive(Debug, Clone, Copy)]
 pub struct Position {
     pub x: f32,

@@ -4,9 +4,8 @@ use pixels::{wgpu::Color, Pixels, SurfaceTexture};
 use winit::window::Window;
 
 use crate::colors::Rgba;
-use crate::prelude::float_eql;
 use crate::render_types::Rect;
-use crate::utils::{screen_to_pixel, Position, Size};
+use crate::utils::{screen_to_pixel, Position};
 
 pub struct Renderer {
     window_size: (u32, u32),
@@ -60,55 +59,91 @@ impl Renderer {
         pixels[idx + 3] = color[3];
     }
 
+    // Refrence: https://stackoverflow.com/questions/34440429/draw-a-line-in-a-bitmap-possibly-with-piston
     pub fn draw_line(&mut self, start: Position, end: Position, color: Rgba) {
-        let (x1, y1) = (start.x, start.y);
-        let (x2, y2) = (end.x, end.y);
+        // Create local variables for moving start point
+        let (x1, y1) = (start.x as i32, start.y as i32);
+        let (x2, y2) = (end.x as i32, end.y as i32);
+        let (mut x0, mut y0) = (x1, y1);
 
-        let dx = if x1 < x2 { 1. } else { -1. };
-        let dy = if y1 < y2 { 1. } else { -1. };
+        // Get absolute x/y offset
+        let dx = if x0 > x2 { x0 - x2 } else { x2 - x0 };
+        let dy = if y0 > y2 { y0 - y2 } else { y2 - y0 };
 
-        let (mut x, mut y) = (x1, y1);
+        // Get slopes
+        let sx = if x0 < x2 { 1 } else { -1 };
+        let sy = if y0 < y2 { 1 } else { -1 };
+
+        // Initialize error
+        let mut err = if dx > dy { dx } else { -dy } / 2;
+        let mut err2;
+
         loop {
-            self.draw_pixel(x, y, color);
+            // Draw pixel
+            self.draw_pixel(x0 as f32, y0 as f32, color);
 
-            if x1 == x2 {
-                x = x2;
-                y += dy;
-            } else if y1 == y2 {
-                y = y2;
-                x += dx;
-            } else {
-                x += dx;
-                y += dy;
-            }
-
-            if x == x2 && y == y2 {
+            // Check end condition
+            if x0 == x2 && y0 == y2 {
                 break;
+            };
+
+            // Store old error
+            err2 = 2 * err;
+
+            // Adjust error and start position
+            if err2 > -dx {
+                err -= dy;
+                x0 += sx;
+            }
+            if err2 < dy {
+                err += dx;
+                y0 += sy;
             }
         }
     }
 
+    fn rotated(x: f32, y: f32, center: Position, theta: f32) -> Position {
+        // Translate point to origin
+        let temp_x = x - center.x;
+        let temp_y = y - center.y;
+
+        // Apply rotation
+        let mut rx = temp_x * theta.cos() - temp_y * theta.sin();
+        let mut ry = temp_x * theta.sin() + temp_y * theta.cos();
+
+        // Translate back
+        rx = rx + center.x;
+        ry = ry + center.y;
+
+        (ry, rx).into()
+    }
+
     // TODO: Take into account rotations!
     pub fn draw_rect(&mut self, rect: Rect, color: Rgba) {
-        // Flip x and y so that retangles are draw correctly
-        let position: Position = (rect.position.y, rect.position.x).into();
-        let size: Size = (rect.size.height, rect.size.width).into();
+        let rot = rect.rotation.as_radians();
+        let (w, h) = (rect.size.width, rect.size.height);
+        let position: Position = (rect.position.x, rect.position.y).into();
 
-        // Separate into 4 lines and draw each one
-        let line1_start = position;
-        let line1_end = (position.x + size.width, position.y);
-        self.draw_line(line1_start.into(), line1_end.into(), color);
+        let center = (position.x + 0.5 * w, position.y + 0.5 * h).into();
 
+        // Left edge
+        let line1_start = Self::rotated(position.x, position.y, center, rot);
+        let line1_end = Self::rotated(position.x, position.y + h, center, rot);
+        self.draw_line(line1_start, line1_end, color);
+
+        // Bottom edge
         let line2_start = line1_end;
-        let line2_end = (position.x + size.width, position.y + size.height);
-        self.draw_line(line2_start.into(), line2_end.into(), color);
+        let line2_end = Self::rotated(position.x + w, position.y + h, center, rot);
+        self.draw_line(line2_start, line2_end, color);
 
+        // Right edge
         let line3_start = line2_end;
-        let line3_end = (position.x, position.y + size.height);
-        self.draw_line(line3_start.into(), line3_end.into(), color);
+        let line3_end = Self::rotated(position.x + w, position.y, center, rot);
+        self.draw_line(line3_start, line3_end, color);
 
+        // Top edge
         let line4_start = line3_end;
         let line4_end = line1_start;
-        self.draw_line(line4_start.into(), line4_end.into(), color);
+        self.draw_line(line4_start, line4_end, color);
     }
 }
