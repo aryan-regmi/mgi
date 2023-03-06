@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use mgi::prelude::*;
 use rand::{thread_rng, Rng};
 
@@ -45,8 +47,10 @@ impl Game for MyGame {
     }
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     GameBuilder::<MyGame>::init("Draw Point")
         .set_size(800, 800)
-        .run();
+        .run()?;
+
+    Ok(())
 }

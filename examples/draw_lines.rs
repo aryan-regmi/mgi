@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use mgi::prelude::*;
 
 struct MyGame {
@@ -42,8 +44,10 @@ impl Game for MyGame {
     }
 }
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     GameBuilder::<MyGame>::init("Draw Lines")
         .set_size(800, 800)
-        .run();
+        .run()?;
+
+    Ok(())
 }

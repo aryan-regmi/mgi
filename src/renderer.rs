@@ -1,3 +1,4 @@
+use std::error::Error;
 use std::slice::{ChunksExact, ChunksExactMut};
 
 use pixels::{wgpu::Color, Pixels, SurfaceTexture};
@@ -13,17 +14,16 @@ pub struct Renderer {
 }
 
 impl Renderer {
-    pub fn new(window: &Window) -> Self {
+    pub fn new(window: &Window) -> Result<Self, Box<dyn Error>> {
         let size = window.inner_size();
         let surface_texture = SurfaceTexture::new(size.width, size.height, &window);
 
-        // TODO: Proper error handling
-        let pixels = Pixels::new(size.width, size.height, surface_texture).unwrap();
+        let pixels = Pixels::new(size.width, size.height, surface_texture)?;
 
-        Self {
+        Ok(Self {
             window_size: (size.width, size.height),
             pixels,
-        }
+        })
     }
 
     pub fn pixels(&self) -> ChunksExact<'_, u8> {
@@ -118,7 +118,6 @@ impl Renderer {
         (ry, rx).into()
     }
 
-    // TODO: Take into account rotations!
     pub fn draw_rect(&mut self, rect: Rect, color: Rgba) {
         let rot = rect.rotation.as_radians();
         let (w, h) = (rect.size.width, rect.size.height);

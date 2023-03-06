@@ -1,3 +1,5 @@
+use std::error::Error;
+
 use winit::dpi::PhysicalSize;
 use winit::event::Event;
 use winit::event_loop::ControlFlow;
@@ -57,20 +59,19 @@ impl<T: Game> GameBuilder<T> {
         self
     }
 
-    pub fn run(mut self) {
+    pub fn run(mut self) -> Result<(), Box<dyn Error>> {
         // Setup the main window
-        let size = self.size.expect("Size must be set first"); // TODO: Proper error handling
+        let size = self.size.expect("Size must be set first");
         let window = WindowBuilder::new()
             .with_title(self.title.to_owned())
             .with_inner_size(PhysicalSize::new(size.0, size.1))
             .with_resizable(self.resizeable)
-            .build(&self.event_loop)
-            .unwrap(); // TODO: Proper error handling
+            .build(&self.event_loop)?;
         if self.fullscreen {
             window.set_fullscreen(Some(Fullscreen::Borderless(None)));
         }
 
-        self.renderer = Some(Renderer::new(&window));
+        self.renderer = Some(Renderer::new(&window)?);
 
         // Game loop
         let mut input = WinitInputHelper::new();
