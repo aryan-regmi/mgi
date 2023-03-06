@@ -34,51 +34,60 @@ impl Rotation {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Position {
-    pub x: f32,
-    pub y: f32,
+    pub x: i32,
+    pub y: i32,
+}
+
+impl From<(i32, i32)> for Position {
+    fn from(tup: (i32, i32)) -> Self {
+        Self { x: tup.0, y: tup.1 }
+    }
 }
 
 impl From<(f32, f32)> for Position {
     fn from(tup: (f32, f32)) -> Self {
-        Self { x: tup.0, y: tup.1 }
+        Self {
+            x: tup.0 as i32,
+            y: tup.1 as i32,
+        }
     }
 }
 
 impl From<(u32, u32)> for Position {
     fn from(tup: (u32, u32)) -> Self {
         Self {
-            x: tup.0 as f32,
-            y: tup.1 as f32,
+            x: tup.0 as i32,
+            y: tup.1 as i32,
         }
     }
 }
 
 #[derive(Debug, Clone, Copy)]
 pub struct Size {
-    pub width: f32,
-    pub height: f32,
-}
-
-impl From<(f32, f32)> for Size {
-    fn from(tup: (f32, f32)) -> Self {
-        Self {
-            width: tup.0,
-            height: tup.1,
-        }
-    }
+    pub width: i32,
+    pub height: i32,
 }
 
 impl From<(u32, u32)> for Size {
     fn from(tup: (u32, u32)) -> Self {
         Self {
-            width: tup.0 as f32,
-            height: tup.1 as f32,
+            width: tup.0 as i32,
+            height: tup.1 as i32,
         }
     }
 }
 
-impl Into<(f32, f32)> for Size {
-    fn into(self) -> (f32, f32) {
+impl From<(f32, f32)> for Size {
+    fn from(tup: (f32, f32)) -> Self {
+        Self {
+            width: tup.0 as i32,
+            height: tup.1 as i32,
+        }
+    }
+}
+
+impl Into<(i32, i32)> for Size {
+    fn into(self) -> (i32, i32) {
         (self.width, self.height)
     }
 }

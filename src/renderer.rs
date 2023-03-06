@@ -102,18 +102,18 @@ impl Renderer {
         }
     }
 
-    fn rotated(x: f32, y: f32, center: Position, theta: f32) -> Position {
+    fn rotated(x: i32, y: i32, center: Position, theta: f32) -> Position {
         // Translate point to origin
-        let temp_x = x - center.x;
-        let temp_y = y - center.y;
+        let temp_x = (x - center.x) as f32;
+        let temp_y = (y - center.y) as f32;
 
         // Apply rotation
         let mut rx = temp_x * theta.cos() - temp_y * theta.sin();
         let mut ry = temp_x * theta.sin() + temp_y * theta.cos();
 
         // Translate back
-        rx = rx + center.x;
-        ry = ry + center.y;
+        rx = rx + center.x as f32;
+        ry = ry + center.y as f32;
 
         (ry, rx).into()
     }
@@ -122,28 +122,58 @@ impl Renderer {
     pub fn draw_rect(&mut self, rect: Rect, color: Rgba) {
         let rot = rect.rotation.as_radians();
         let (w, h) = (rect.size.width, rect.size.height);
-        let position: Position = (rect.position.x, rect.position.y).into();
 
-        let center = (position.x + 0.5 * w, position.y + 0.5 * h).into();
+        // Only do rotated calcs if angle is not zero
+        if rot > 0. {
+            let position: Position = (rect.position.x, rect.position.y).into();
 
-        // Left edge
-        let line1_start = Self::rotated(position.x, position.y, center, rot);
-        let line1_end = Self::rotated(position.x, position.y + h, center, rot);
-        self.draw_line(line1_start, line1_end, color);
+            let center = (
+                position.x as f32 + 0.5 * w as f32,
+                position.y as f32 + 0.5 * h as f32,
+            )
+                .into();
 
-        // Bottom edge
-        let line2_start = line1_end;
-        let line2_end = Self::rotated(position.x + w, position.y + h, center, rot);
-        self.draw_line(line2_start, line2_end, color);
+            // Left edge
+            let line1_start = Self::rotated(position.x, position.y, center, rot);
+            let line1_end = Self::rotated(position.x, position.y + h, center, rot);
+            self.draw_line(line1_start, line1_end, color);
 
-        // Right edge
-        let line3_start = line2_end;
-        let line3_end = Self::rotated(position.x + w, position.y, center, rot);
-        self.draw_line(line3_start, line3_end, color);
+            // Bottom edge
+            let line2_start = line1_end;
+            let line2_end = Self::rotated(position.x + w, position.y + h, center, rot);
+            self.draw_line(line2_start, line2_end, color);
 
-        // Top edge
-        let line4_start = line3_end;
-        let line4_end = line1_start;
-        self.draw_line(line4_start, line4_end, color);
+            // Right edge
+            let line3_start = line2_end;
+            let line3_end = Self::rotated(position.x + w, position.y, center, rot);
+            self.draw_line(line3_start, line3_end, color);
+
+            // Top edge
+            let line4_start = line3_end;
+            let line4_end = line1_start;
+            self.draw_line(line4_start, line4_end, color);
+        } else {
+            let position: Position = (rect.position.y, rect.position.x).into();
+
+            // Left edge
+            let line1_start = (position.x, position.y).into();
+            let line1_end = (position.x, position.y + h).into();
+            self.draw_line(line1_start, line1_end, color);
+
+            // Bottom edge
+            let line2_start = line1_end;
+            let line2_end = (position.x + w, position.y + h).into();
+            self.draw_line(line2_start, line2_end, color);
+
+            // Right edge
+            let line3_start = line2_end;
+            let line3_end = (position.x + w, position.y).into();
+            self.draw_line(line3_start, line3_end, color);
+
+            // Top edge
+            let line4_start = line3_end;
+            let line4_end = line1_start;
+            self.draw_line(line4_start, line4_end, color);
+        }
     }
 }
