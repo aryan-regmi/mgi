@@ -11,10 +11,10 @@ impl Drawable for MyGame {
         renderer.clear_color(Rgba::new(255, 255, 255, 1.0).unwrap());
 
         let color = Rgba::new(255, 0, 0, 1.0).unwrap();
-        renderer.draw_line((0., 0.), (400., 400.), color);
+        renderer.draw_line((0., 0.).into(), (400., 400.).into(), color);
 
         let color = Rgba::new(0, 0, 255, 1.0).unwrap();
-        renderer.draw_line((0., 800.), (400., 400.), color);
+        renderer.draw_line((0., 800.).into(), (400., 400.).into(), color);
     }
 }
 

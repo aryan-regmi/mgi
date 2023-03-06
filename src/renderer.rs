@@ -4,7 +4,9 @@ use pixels::{wgpu::Color, Pixels, SurfaceTexture};
 use winit::window::Window;
 
 use crate::colors::Rgba;
-use crate::utils::screen_to_pixel;
+use crate::prelude::float_eql;
+use crate::render_types::Rect;
+use crate::utils::{screen_to_pixel, Position, Size};
 
 pub struct Renderer {
     window_size: (u32, u32),
@@ -58,24 +60,55 @@ impl Renderer {
         pixels[idx + 3] = color[3];
     }
 
-    pub fn draw_line(&mut self, start: (f32, f32), end: (f32, f32), color: Rgba) {
-        let (x1, y1) = start;
-        let (x2, y2) = end;
+    pub fn draw_line(&mut self, start: Position, end: Position, color: Rgba) {
+        let (x1, y1) = (start.x, start.y);
+        let (x2, y2) = (end.x, end.y);
 
         let dx = if x1 < x2 { 1. } else { -1. };
         let dy = if y1 < y2 { 1. } else { -1. };
 
         let (mut x, mut y) = (x1, y1);
-        while x != x2 && y != y2 {
+        loop {
             self.draw_pixel(x, y, color);
-            x += dx;
-            y += dy;
+
+            if x1 == x2 {
+                x = x2;
+                y += dy;
+            } else if y1 == y2 {
+                y = y2;
+                x += dx;
+            } else {
+                x += dx;
+                y += dy;
+            }
+
+            if x == x2 && y == y2 {
+                break;
+            }
         }
     }
 
-    pub fn draw_rect(&mut self, position: (f32, f32), size: (f32, f32), color: Rgba) {
-        // Separate into 4 lines
+    // TODO: Take into account rotations!
+    pub fn draw_rect(&mut self, rect: Rect, color: Rgba) {
+        // Flip x and y so that retangles are draw correctly
+        let position: Position = (rect.position.y, rect.position.x).into();
+        let size: Size = (rect.size.height, rect.size.width).into();
+
+        // Separate into 4 lines and draw each one
         let line1_start = position;
-        let line1_end = (position.0 + size.0, position.1);
+        let line1_end = (position.x + size.width, position.y);
+        self.draw_line(line1_start.into(), line1_end.into(), color);
+
+        let line2_start = line1_end;
+        let line2_end = (position.x + size.width, position.y + size.height);
+        self.draw_line(line2_start.into(), line2_end.into(), color);
+
+        let line3_start = line2_end;
+        let line3_end = (position.x, position.y + size.height);
+        self.draw_line(line3_start.into(), line3_end.into(), color);
+
+        let line4_start = line3_end;
+        let line4_end = line1_start;
+        self.draw_line(line4_start.into(), line4_end.into(), color);
     }
 }
