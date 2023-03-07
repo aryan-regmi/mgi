@@ -1,11 +1,11 @@
 use std::f32::consts::PI;
 
-pub(crate) fn screen_to_pixel(screen_size: (f32, f32), x: f32, y: f32) -> usize {
+pub(crate) fn screen_to_pixel(screen_size: (u32, u32), x: i32, y: i32) -> usize {
     let (w, h) = screen_size;
 
-    let mut idx: usize = (4. * (h * x + y)) as usize;
-    if idx >= (4. * h * w) as usize {
-        idx = ((4. * h * w) - 4.) as usize;
+    let mut idx: usize = (4 * (h as i32 * x + y)) as usize;
+    if idx >= (4 * h * w) as usize {
+        idx = ((4 * h * w) - 4) as usize;
     }
 
     idx

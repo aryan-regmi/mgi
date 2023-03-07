@@ -45,11 +45,17 @@ impl Renderer {
         self.pixels.set_clear_color(c);
     }
 
-    pub fn draw_pixel(&mut self, x: f32, y: f32, color: Rgba) {
+    pub fn draw_pixel(&mut self, x: i32, y: i32, color: Rgba) {
         let pixels = self.pixels.get_frame_mut();
 
-        let w = self.window_size.0 as f32;
-        let h = self.window_size.1 as f32;
+        let w = self.window_size.0;
+        let h = self.window_size.1;
+
+        // Don't wrap around the screen; ignore values bigger than the screen/window
+        if x < 0 || y < 0 || x > w as i32 || y > h as i32 {
+            return;
+        }
+
         let idx = screen_to_pixel((w, h), x, y);
 
         let color = color.as_raw();
@@ -80,7 +86,7 @@ impl Renderer {
 
         loop {
             // Draw pixel
-            self.draw_pixel(x0 as f32, y0 as f32, color);
+            self.draw_pixel(x0, y0, color);
 
             // Check end condition
             if x0 == x2 && y0 == y2 {
@@ -173,6 +179,42 @@ impl Renderer {
             let line4_start = line3_end;
             let line4_end = line1_start;
             self.draw_line(line4_start, line4_end, color);
+        }
+    }
+
+    // Reference: https://www.geeksforgeeks.org/bresenhams-circle-drawing-algorithm/
+    pub fn draw_circle(&mut self, center: Position, radius: i32, color: Rgba) {
+        // Function to put pixels at subsequence points
+        let mut draw_sym_pixels = |center: Position, position: Position| {
+            let (xc, yc) = (center.x, center.y);
+            let (x, y) = (position.x, position.y);
+
+            self.draw_pixel(xc + x, yc + y, color);
+            self.draw_pixel(xc - x, yc + y, color);
+            self.draw_pixel(xc + x, yc - y, color);
+            self.draw_pixel(xc - x, yc - y, color);
+            self.draw_pixel(xc + y, yc + x, color);
+            self.draw_pixel(xc - y, yc + x, color);
+            self.draw_pixel(xc + y, yc - x, color);
+            self.draw_pixel(xc - y, yc - x, color);
+        };
+
+        let (mut x, mut y) = (0, radius);
+        let mut d = 3 - 2 * radius;
+
+        draw_sym_pixels(center, (x, y).into());
+        while y >= x {
+            x += 1;
+
+            // Check for decision parameter and correspondingly update d, x, y
+            if d > 0 {
+                y -= 1;
+                d = d + 4 * (x - y) + 10;
+            } else {
+                d = d + 4 * x + 6;
+            }
+
+            draw_sym_pixels(center, (x, y).into());
         }
     }
 }

@@ -17,7 +17,7 @@ impl Drawable for MyGame {
             for j in 200..600 {
                 let color: [u8; 4] = rng.gen();
 
-                renderer.draw_pixel(i as f32, j as f32, color.into());
+                renderer.draw_pixel(i, j, color.into());
             }
         }
     }

@@ -7,7 +7,7 @@ pub struct Rect {
 }
 
 impl Rect {
-    pub fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
+    pub fn new(x: i32, y: i32, width: u32, height: u32) -> Self {
         Self {
             position: (x, y).into(),
             size: (width, height).into(),
