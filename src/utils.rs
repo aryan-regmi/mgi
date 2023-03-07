@@ -11,6 +11,17 @@ pub(crate) fn screen_to_pixel(screen_size: (u32, u32), x: i32, y: i32) -> usize 
     idx
 }
 
+pub(crate) fn pixel_to_screen(screen_size: (u32, u32), idx: usize) -> Position {
+    let (_w, h) = screen_size;
+
+    let i = idx as u32;
+
+    let x = (i / 4 - i / (4 * h)) / h;
+    let y = (i - 4 * h * x) / 4;
+
+    (x, y).into()
+}
+
 pub enum Rotation {
     Degrees(f32),
     Radians(f32),

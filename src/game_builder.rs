@@ -8,6 +8,7 @@ use winit::{event_loop::EventLoop, window::WindowBuilder};
 use winit_input_helper::WinitInputHelper;
 
 use crate::renderer::Renderer;
+use crate::textures::TextureManager;
 
 pub trait Drawable {
     fn update(&mut self);
@@ -28,6 +29,7 @@ pub struct GameBuilder<T: Game> {
     fullscreen: bool,
     event_loop: EventLoop<()>,
     renderer: Option<Renderer>,
+    texture_manager: Option<TextureManager>,
     game_obj: T,
 }
 
@@ -40,6 +42,7 @@ impl<T: Game> GameBuilder<T> {
             fullscreen: false,
             event_loop: EventLoop::new(),
             renderer: None,
+            texture_manager: None,
             game_obj: T::setup(),
         }
     }
@@ -59,6 +62,11 @@ impl<T: Game> GameBuilder<T> {
         self
     }
 
+    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
+        self.texture_manager = Some(texture_manager);
+        self
+    }
+
     pub fn run(mut self) -> Result<(), Box<dyn Error>> {
         // Setup the main window
         let size = self.size.expect("Size must be set first");
@@ -71,7 +79,11 @@ impl<T: Game> GameBuilder<T> {
             window.set_fullscreen(Some(Fullscreen::Borderless(None)));
         }
 
-        self.renderer = Some(Renderer::new(&window)?);
+        let mut renderer = Renderer::new(&window)?;
+        if let Some(texture_manager) = self.texture_manager {
+            renderer.add_texture_manager(texture_manager);
+        }
+        self.renderer = Some(renderer);
 
         // Game loop
         let mut input = WinitInputHelper::new();

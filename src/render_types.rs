@@ -18,4 +18,18 @@ impl Rect {
     pub fn rotate(&mut self, angle: Rotation) {
         self.rotation = angle;
     }
+
+    pub fn is_inside(&self, x: i32, y: i32) -> bool {
+        let (w, h) = self.size.into();
+        let position = self.position;
+
+        let top_right = (position.x + w, position.y);
+        let bottom_left = (position.x, position.y + h);
+
+        if x <= top_right.0 && x >= bottom_left.0 && y <= bottom_left.1 && y >= top_right.1 {
+            true
+        } else {
+            false
+        }
+    }
 }

@@ -1,16 +1,21 @@
 use std::error::Error;
 use std::slice::{ChunksExact, ChunksExactMut};
 
+use image::imageops::FilterType;
+use image::Pixel;
 use pixels::{wgpu::Color, Pixels, SurfaceTexture};
 use winit::window::Window;
 
 use crate::colors::Rgba;
+use crate::prelude::pixel_to_screen;
 use crate::render_types::Rect;
+use crate::textures::TextureManager;
 use crate::utils::{screen_to_pixel, Position};
 
 pub struct Renderer {
     window_size: (u32, u32),
     pub(crate) pixels: Pixels,
+    texture_manager: Option<TextureManager>,
 }
 
 impl Renderer {
@@ -23,7 +28,12 @@ impl Renderer {
         Ok(Self {
             window_size: (size.width, size.height),
             pixels,
+            texture_manager: None,
         })
+    }
+
+    pub fn add_texture_manager(&mut self, texture_manager: TextureManager) {
+        self.texture_manager = Some(texture_manager);
     }
 
     pub fn pixels(&self) -> ChunksExact<'_, u8> {
@@ -216,5 +226,88 @@ impl Renderer {
 
             draw_sym_pixels(center, (x, y).into());
         }
+    }
+
+    pub fn draw_texture(
+        &mut self,
+        texture_name: &str,
+        _src: Option<Rect>,
+        dest: Rect,
+    ) -> Result<(), Box<dyn Error>> {
+        // TODO: Make sure texture manager is initalized first!
+        if self.texture_manager.is_none() {
+            return Err("Texture manager must be initalized before drawing a texture".into());
+        }
+
+        // TODO: Implement `src`
+
+        // Grab the right texture
+        let texture = self
+            .texture_manager
+            .as_mut()
+            .unwrap()
+            .get_texture_mut(texture_name)
+            .ok_or(format!(
+                "Texture `{}` doesn't exist in the TextureManager",
+                texture_name
+            ))?;
+
+        // Clamp texture size by window size
+        let (mut dest_width, mut dest_height) = dest.size.into();
+        let (screen_width, screen_height) = (self.window_size.0 as i32, self.window_size.1 as i32);
+        if dest_width > screen_width && dest_height > screen_height {
+            dest_width = screen_width;
+            dest_height = screen_height;
+        } else if dest_width > screen_width {
+            dest_width = screen_width;
+        } else if dest_height > screen_height {
+            dest_height = screen_height;
+        }
+        let texture = image::imageops::resize(
+            texture,
+            dest_width as u32,
+            dest_height as u32,
+            FilterType::Nearest,
+        );
+
+        //
+        let mut texture_pixels = Vec::with_capacity(texture.pixels().len() * 4);
+        for px in texture.pixels() {
+            for val in px.channels() {
+                texture_pixels.push(*val);
+            }
+        }
+
+        let screen = self.pixels.get_frame_mut();
+
+        let (width, height) = (dest_width * 4, dest_height);
+
+        let mut s = 0;
+        for y in 0..height {
+            // Calculate pixel index
+            let i = (dest.position.x * 4
+                + dest.position.y * self.window_size.0 as i32 * 4
+                + y * self.window_size.0 as i32 * 4) as usize;
+
+            // TODO: Don't wrap around the screen; ignore values bigger than the screen/window
+            let pos = pixel_to_screen(self.window_size, i);
+            if pos.x < 0 || pos.y < 0 || pos.x > screen_width || pos.y > screen_height {
+                return Ok(());
+            }
+
+            // Merge pixels from sprite into screen
+            let zipped = screen[i..i + width as usize]
+                .iter_mut()
+                .zip(&texture_pixels[s..s + width as usize]);
+            for (left, &right) in zipped {
+                if right > 0 {
+                    *left = right;
+                }
+            }
+
+            s += width as usize;
+        }
+
+        Ok(())
     }
 }

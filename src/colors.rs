@@ -1,3 +1,5 @@
+use image::Pixel;
+
 #[derive(Debug, Copy, Clone)]
 pub struct Rgba {
     red: u8,
@@ -34,6 +36,32 @@ impl From<[u8; 4]> for Rgba {
             green: color[1],
             blue: color[2],
             alpha,
+        }
+    }
+}
+
+impl From<(u32, u32, image::Rgba<u8>)> for Rgba {
+    fn from(px: (u32, u32, image::Rgba<u8>)) -> Self {
+        let rgba = px.2.channels();
+
+        Self {
+            red: rgba[0],
+            green: rgba[1],
+            blue: rgba[2],
+            alpha: (rgba[3] / 255) as f32,
+        }
+    }
+}
+
+impl From<&image::Rgba<u8>> for Rgba {
+    fn from(px: &image::Rgba<u8>) -> Self {
+        let rgba = px.channels();
+
+        Self {
+            red: rgba[0],
+            green: rgba[1],
+            blue: rgba[2],
+            alpha: (rgba[3] / 255) as f32,
         }
     }
 }
