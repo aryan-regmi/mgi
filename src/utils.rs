@@ -1,104 +1,32 @@
-use std::f32::consts::PI;
+use std::{cell::RefCell, rc::Rc};
 
-pub(crate) fn screen_to_pixel(screen_size: (u32, u32), x: i32, y: i32) -> usize {
-    let (w, h) = screen_size;
+use raylib::{RaylibHandle, RaylibThread};
 
-    let mut idx: usize = (4 * (h as i32 * x + y)) as usize;
-    if idx >= (4 * h * w) as usize {
-        idx = ((4 * h * w) - 4) as usize;
-    }
+pub type RenderContext = Rc<RefCell<RaylibHandle>>;
+pub type RenderThread = Rc<RaylibThread>;
 
-    idx
-}
-
-pub(crate) fn pixel_to_screen(screen_size: (u32, u32), idx: usize) -> Position {
-    let (_w, h) = screen_size;
-
-    let i = idx as u32;
-
-    let x = (i / 4 - i / (4 * h)) / h;
-    let y = (i - 4 * h * x) / 4;
-
-    (x, y).into()
-}
-
-pub enum Rotation {
-    Degrees(f32),
-    Radians(f32),
-}
-
-impl Rotation {
-    pub fn as_degrees(&self) -> f32 {
-        match self {
-            Rotation::Degrees(d) => *d,
-            Rotation::Radians(r) => r * 180. / PI,
-        }
-    }
-
-    pub fn as_radians(&self) -> f32 {
-        match self {
-            Rotation::Degrees(d) => d * PI / 180.,
-            Rotation::Radians(r) => *r,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Position {
+pub struct Vec2 {
     pub x: i32,
     pub y: i32,
 }
 
-impl From<(i32, i32)> for Position {
-    fn from(tup: (i32, i32)) -> Self {
-        Self { x: tup.0, y: tup.1 }
+impl Vec2 {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
     }
 }
 
-impl From<(f32, f32)> for Position {
-    fn from(tup: (f32, f32)) -> Self {
+impl From<(u32, u32)> for Vec2 {
+    fn from(v: (u32, u32)) -> Self {
         Self {
-            x: tup.0 as i32,
-            y: tup.1 as i32,
+            x: v.0 as i32,
+            y: v.1 as i32,
         }
     }
 }
 
-impl From<(u32, u32)> for Position {
-    fn from(tup: (u32, u32)) -> Self {
-        Self {
-            x: tup.0 as i32,
-            y: tup.1 as i32,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct Size {
-    pub width: i32,
-    pub height: i32,
-}
-
-impl From<(u32, u32)> for Size {
-    fn from(tup: (u32, u32)) -> Self {
-        Self {
-            width: tup.0 as i32,
-            height: tup.1 as i32,
-        }
-    }
-}
-
-impl From<(f32, f32)> for Size {
-    fn from(tup: (f32, f32)) -> Self {
-        Self {
-            width: tup.0 as i32,
-            height: tup.1 as i32,
-        }
-    }
-}
-
-impl Into<(i32, i32)> for Size {
-    fn into(self) -> (i32, i32) {
-        (self.width, self.height)
+impl From<(i32, i32)> for Vec2 {
+    fn from(v: (i32, i32)) -> Self {
+        Self { x: v.0, y: v.1 }
     }
 }

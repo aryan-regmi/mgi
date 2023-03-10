@@ -14,7 +14,11 @@ impl Drawable for MyGame {
         let mut d = rl.begin_drawing(renderer.rt());
 
         d.clear_background(Color::BLACK);
-        d.draw_text("HELLO WORLD!", 250, 400, 50, Color::RED);
+
+        d.draw_rectangle(0, 0, 200, 200, Color::BLUE);
+        d.draw_rectangle(400, 400, 300, 100, Color::RED);
+        d.draw_rectangle_lines(0, 600, 400, 200, Color::GREEN);
+        d.draw_rectangle(50, 650, 300, 100, Color::GOLD);
     }
 }
 
@@ -41,7 +45,7 @@ impl Game for MyGame {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    GameBuilder::<MyGame>::init("Hello World", (800, 800)).run()?;
+    GameBuilder::<MyGame>::init("Rects", (800, 800)).run()?;
 
     Ok(())
 }

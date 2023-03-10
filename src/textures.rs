@@ -1,9 +1,10 @@
-use std::{collections::HashMap, error::Error, fs::File, io::BufReader, path::Path};
+use std::{cell::Ref, collections::HashMap};
 
-use image::{DynamicImage, ImageFormat};
+use raylib::{texture::Texture2D, RaylibHandle, RaylibThread};
 
+// TODO: Make Texture its own struct (with path and raw_texture as fields)
 pub struct TextureManager {
-    textures: HashMap<String, DynamicImage>,
+    textures: HashMap<String, (String, Option<Texture2D>)>,
 }
 
 impl TextureManager {
@@ -13,35 +14,43 @@ impl TextureManager {
         }
     }
 
-    pub fn add_texture<P: AsRef<Path>>(
-        &mut self,
-        name: String,
-        path: P,
-    ) -> Result<(), Box<dyn Error>> {
-        let rdr = BufReader::new(File::open(path)?);
-        let texture = image::load(rdr, ImageFormat::Png)?;
-
-        self.textures.insert(name, texture);
-
-        Ok(())
+    pub fn add_texture(&mut self, name: &str, path: &str) {
+        self.textures.insert(name.into(), (path.into(), None));
     }
 
-    pub fn add_textures<P: AsRef<Path>>(
+    /// Takes a map of texture names and paths.
+    pub fn add_textures(&mut self, textures: HashMap<&str, &str>) {
+        for (name, path) in textures {
+            self.textures.insert(name.into(), (path.into(), None));
+        }
+    }
+
+    pub(crate) fn load_textures(
         &mut self,
-        paths: Vec<(String, P)>,
-    ) -> Result<(), Box<dyn Error>> {
-        for (name, path) in paths {
-            self.add_texture(name, path)?;
+        rl: &mut RaylibHandle,
+        rt: &RaylibThread,
+    ) -> Result<(), String> {
+        for (path, tex) in self.textures.values_mut() {
+            let texture = rl.load_texture(rt, path)?;
+
+            if let None = tex {
+                *tex = Some(texture);
+            }
         }
 
         Ok(())
     }
 
-    pub fn get_texture(&self, name: &str) -> Option<&DynamicImage> {
-        self.textures.get(name)
+    pub fn get_texture(&self, name: &str) -> Option<&Texture2D> {
+        let texture = self.textures.get(name)?;
+        texture.1.as_ref()
     }
+}
 
-    pub fn get_texture_mut(&mut self, name: &str) -> Option<&mut DynamicImage> {
-        self.textures.get_mut(name)
+pub struct TextureManagerRef<'a>(pub(crate) Ref<'a, TextureManager>);
+
+impl<'a> TextureManagerRef<'a> {
+    pub fn get_texture(&self, name: &str) -> Option<&Texture2D> {
+        self.0.get_texture(name)
     }
 }

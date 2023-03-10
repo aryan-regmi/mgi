@@ -14,7 +14,15 @@ impl Drawable for MyGame {
         let mut d = rl.begin_drawing(renderer.rt());
 
         d.clear_background(Color::BLACK);
-        d.draw_text("HELLO WORLD!", 250, 400, 50, Color::RED);
+
+        d.draw_line(0, 0, 400, 400, Color::RED);
+        d.draw_line(800, 0, 400, 400, Color::BLUE);
+        d.draw_line(0, 800, 400, 400, Color::GREEN);
+        d.draw_line(800, 800, 400, 400, Color::WHITE);
+        d.draw_line(0, 400, 400, 400, Color::YELLOW);
+        d.draw_line(800, 400, 400, 400, Color::MAGENTA);
+        d.draw_line(400, 0, 400, 400, Color::GOLD);
+        d.draw_line(400, 800, 400, 400, Color::MAROON);
     }
 }
 
@@ -41,7 +49,7 @@ impl Game for MyGame {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    GameBuilder::<MyGame>::init("Hello World", (800, 800)).run()?;
+    GameBuilder::<MyGame>::init("Lines", (800, 800)).run()?;
 
     Ok(())
 }
