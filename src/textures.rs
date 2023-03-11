@@ -2,26 +2,40 @@ use std::{cell::Ref, collections::HashMap};
 
 use raylib::{texture::Texture2D, RaylibHandle, RaylibThread};
 
+pub struct Texture {
+    name: String,
+    path: String,
+    raw_texture: Option<Texture2D>,
+}
+
 // TODO: Make Texture its own struct (with path and raw_texture as fields)
 pub struct TextureManager {
-    textures: HashMap<String, (String, Option<Texture2D>)>,
+    textures: Vec<Texture>,
 }
 
 impl TextureManager {
     pub fn new() -> Self {
         Self {
-            textures: HashMap::new(),
+            textures: Vec::new(),
         }
     }
 
     pub fn add_texture(&mut self, name: &str, path: &str) {
-        self.textures.insert(name.into(), (path.into(), None));
+        self.textures.push(Texture {
+            name: name.into(),
+            path: path.into(),
+            raw_texture: None,
+        });
     }
 
     /// Takes a map of texture names and paths.
     pub fn add_textures(&mut self, textures: HashMap<&str, &str>) {
         for (name, path) in textures {
-            self.textures.insert(name.into(), (path.into(), None));
+            self.textures.push(Texture {
+                name: name.into(),
+                path: path.into(),
+                raw_texture: None,
+            });
         }
     }
 
@@ -30,20 +44,22 @@ impl TextureManager {
         rl: &mut RaylibHandle,
         rt: &RaylibThread,
     ) -> Result<(), String> {
-        for (path, tex) in self.textures.values_mut() {
-            let texture = rl.load_texture(rt, path)?;
-
-            if let None = tex {
-                *tex = Some(texture);
-            }
+        for texture in self.textures.iter_mut() {
+            let raw_texture = rl.load_texture(rt, &texture.path)?;
+            texture.raw_texture = Some(raw_texture);
         }
 
         Ok(())
     }
 
     pub fn get_texture(&self, name: &str) -> Option<&Texture2D> {
-        let texture = self.textures.get(name)?;
-        texture.1.as_ref()
+        for texture in &self.textures {
+            if texture.name == name {
+                return texture.raw_texture.as_ref();
+            }
+        }
+
+        None
     }
 }
 

@@ -1,5 +1,3 @@
-use mgi::textures::TextureManagerRef;
-use raylib::prelude::{Rectangle, Vector2};
 use std::error::Error;
 
 use mgi::prelude::*;
@@ -17,12 +15,9 @@ impl Drawable for MyGame {
 
         d.clear_background(Color::BLACK);
 
-        let bg = texture_manager.as_ref().unwrap().get_texture("bg").unwrap();
-        let person = texture_manager
-            .as_ref()
-            .unwrap()
-            .get_texture("person")
-            .unwrap();
+        let tm = texture_manager.as_ref().unwrap();
+        let bg = tm.get_texture("bg").unwrap();
+        let person = tm.get_texture("person").unwrap();
         d.draw_texture_rec(
             bg,
             Rectangle::new(600., 0., 800., 800.),

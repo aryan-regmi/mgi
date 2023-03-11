@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use raylib::{RaylibHandle, RaylibThread};
+use raylib::{prelude::Vector2, RaylibHandle, RaylibThread};
 
 pub type RenderContext = Rc<RefCell<RaylibHandle>>;
 pub type RenderThread = Rc<RaylibThread>;
@@ -28,5 +28,14 @@ impl From<(u32, u32)> for Vec2 {
 impl From<(i32, i32)> for Vec2 {
     fn from(v: (i32, i32)) -> Self {
         Self { x: v.0, y: v.1 }
+    }
+}
+
+impl From<Vector2> for Vec2 {
+    fn from(vector: Vector2) -> Self {
+        Self {
+            x: vector.x as i32,
+            y: vector.y as i32,
+        }
     }
 }
