@@ -36,11 +36,14 @@ impl<'l> Renderer<'l> {
         self.rt.borrow()
     }
 
+    // TODO: Get rid of this -> renderer will only every draw layers!
     pub fn draw_texture_layers(
         &self,
-        d: &mut RaylibDrawHandle,
         texture_manager: &TextureManagerRef,
     ) -> Result<(), Box<dyn Error>> {
+        let (mut rl, rt) = (self.rl(), self.rt());
+        let mut d = rl.begin_drawing(rt);
+
         for layer in &self.texture_layers {
             if !layer.visible {
                 continue;

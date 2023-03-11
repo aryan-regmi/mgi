@@ -13,11 +13,8 @@ impl Drawable for MyGame {
         texture_manager: &Option<TextureManagerRef>,
         _: &mut Option<TileMapRef>,
     ) {
-        let mut rl = renderer.rl();
-        let mut d = rl.begin_drawing(renderer.rt());
-
         renderer
-            .draw_texture_layers(&mut d, texture_manager.as_ref().unwrap())
+            .draw_texture_layers(texture_manager.as_ref().unwrap())
             .unwrap();
     }
 }

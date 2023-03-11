@@ -8,6 +8,11 @@ use raylib::RaylibHandle;
 
 use crate::{prelude::TextureManager, renderer::Renderer, utils::Vec2};
 
+// pub struct ResourceManager {
+//     texture_manager: Option<Rc<RefCell<TextureManager>>>,
+//     tilemap: Option<Rc<RefCell<TileMap>>>,
+// }
+
 pub trait Drawable {
     fn render(
         &mut self,
