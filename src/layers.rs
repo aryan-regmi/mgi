@@ -1,6 +1,12 @@
 use raylib::prelude::Rectangle;
 
+lazy_static::lazy_static! {
+    static ref LAYER_ID: usize = 0;
+}
+
+#[derive(PartialEq)]
 pub struct Layer<'l, T> {
+    pub(crate) id: usize,
     pub(crate) objects: Vec<&'l T>,
     pub(crate) object_srcs: Vec<Option<Rectangle>>,
     pub(crate) object_dests: Vec<Rectangle>,
@@ -10,7 +16,12 @@ pub struct Layer<'l, T> {
 
 impl<'l, T> Layer<'l, T> {
     pub fn init() -> Self {
+        let idx = *LAYER_ID;
+
+        *LAYER_ID += 1;
+
         Self {
+            id: idx,
             objects: Vec::new(),
             object_srcs: Vec::new(),
             object_dests: Vec::new(),
@@ -45,6 +56,14 @@ impl<'l, T> Layer<'l, T> {
         }
 
         self
+    }
+
+    pub fn set_idx(&mut self, id: usize) {
+        self.id = id;
+    }
+
+    pub fn id(&self) -> usize {
+        self.id
     }
 }
 

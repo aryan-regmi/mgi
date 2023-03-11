@@ -1,4 +1,4 @@
-use crate::{textures::Texture, utils::Vec2};
+use crate::{game_builder::Drawable, textures::Texture, utils::Vec2};
 
 struct Tile {
     // Position in number of tiles
@@ -13,12 +13,13 @@ pub enum TileSetID {
     NumberedTileSet(usize),
 }
 
-pub struct TileSet {
+pub struct TileSet<'t> {
     id: TileSetID,
-    tiles: Vec<Texture>,
+    tiles: Vec<&'t Texture>,
 }
 
-impl TileSet {
+// TODO: Add abitily to create TileSet from a TextureAtlas
+impl<'t> TileSet<'t> {
     pub fn new(id: TileSetID) -> Self {
         Self {
             id,
@@ -26,7 +27,7 @@ impl TileSet {
         }
     }
 
-    pub fn add_tile_type(&mut self, texture: Texture) {
+    pub fn add_tile_type(&mut self, texture: &'t Texture) {
         self.tiles.push(texture);
     }
 
@@ -41,14 +42,41 @@ impl TileSet {
     }
 }
 
-pub struct TileMap {
-    tilesets: Vec<TileSet>,
+pub struct TileMap<'t> {
+    size: Vec2,
+    tile_size: Vec2, // TODO: Add capability for varying tile sizes in the map
+    tilesets: Vec<TileSet<'t>>,
 }
 
-impl TileMap {
-    pub fn new() -> Self {
+impl<'t> TileMap<'t> {
+    // TODO: Add capability for scrolling/infinite tilemap
+    pub fn init(size: Vec2, tile_size: Vec2) -> Self {
         Self {
+            size,
+            tile_size,
             tilesets: Vec::new(),
         }
+    }
+
+    pub fn add_tileset(mut self, tileset: TileSet<'t>) -> Self {
+        self.tilesets.push(tileset);
+        self
+    }
+
+    pub fn add_tilesets(mut self, mut tilesets: Vec<TileSet<'t>>) -> Self {
+        self.tilesets.append(&mut tilesets);
+
+        self
+    }
+}
+
+impl<'t> Drawable for TileMap<'t> {
+    fn update(&mut self) {}
+
+    fn render(
+        &mut self,
+        renderer: &crate::prelude::Renderer,
+        texture_manager: &Option<crate::prelude::TextureManagerRef>,
+    ) {
     }
 }

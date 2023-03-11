@@ -2,7 +2,7 @@ use crate::{
     layers::{Layer, TextureLayer},
     prelude::{Texture, TextureManagerRef},
 };
-use std::{cell::RefCell, error::Error, rc::Rc};
+use std::{cell::RefCell, cmp::Ordering, error::Error, rc::Rc};
 
 use raylib::RaylibHandle;
 
@@ -81,6 +81,11 @@ impl<'g, T: Game> GameBuilder<'g, T> {
         for layer in layers {
             self.renderer.texture_layers.push(layer);
         }
+
+        // Sort layers by their IDs
+        self.renderer
+            .texture_layers
+            .sort_by(|a, b| a.id.partial_cmp(&b.id).unwrap());
         self
     }
 
