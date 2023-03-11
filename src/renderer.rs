@@ -6,8 +6,9 @@ use raylib::{
 };
 
 use crate::{
-    layers::{Layer, TextureLayer},
-    prelude::{Texture, TextureManagerRef},
+    game_builder::Drawable,
+    layers::TextureLayer,
+    prelude::{TextureManagerRef, TileMapRef},
     utils::{RenderContext, RenderThread},
 };
 
@@ -74,5 +75,19 @@ impl<'l> Renderer<'l> {
         }
 
         Ok(())
+    }
+
+    // TODO: Make sure tilemap exists first
+    pub fn draw_tilemap(
+        &self,
+        tilemap: &mut Option<TileMapRef>,
+        texture_manager: &Option<TextureManagerRef>,
+    ) {
+        // TODO: Proper error handlin
+        std::borrow::BorrowMut::borrow_mut(&mut tilemap.as_mut().unwrap().0).render(
+            self,
+            texture_manager,
+            &mut None,
+        )
     }
 }

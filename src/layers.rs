@@ -1,5 +1,6 @@
 use raylib::prelude::Rectangle;
 
+// TODO: Add tint as a field
 #[derive(PartialEq, Debug)]
 pub struct Layer<'l, T> {
     pub(crate) id: usize,

@@ -1,6 +1,6 @@
 use crate::{
-    layers::{Layer, TextureLayer},
-    prelude::{Texture, TextureManagerRef},
+    layers::TextureLayer,
+    prelude::{TextureManagerRef, TileMap, TileMapRef},
 };
 use std::{cell::RefCell, error::Error, rc::Rc};
 
@@ -9,7 +9,12 @@ use raylib::RaylibHandle;
 use crate::{prelude::TextureManager, renderer::Renderer, utils::Vec2};
 
 pub trait Drawable {
-    fn render(&mut self, renderer: &Renderer, texture_manager: &Option<TextureManagerRef>);
+    fn render(
+        &mut self,
+        renderer: &Renderer,
+        texture_manager: &Option<TextureManagerRef>,
+        tilemap: &mut Option<TileMapRef>,
+    );
 }
 
 pub trait Updateable {
@@ -32,6 +37,7 @@ pub struct GameBuilder<'g, T: Game> {
     // Internal Configs
     renderer: Renderer<'g>,
     texture_manager: Option<Rc<RefCell<TextureManager>>>,
+    tilemap: Option<Rc<RefCell<TileMap>>>,
     game_obj: T,
 }
 
@@ -51,6 +57,7 @@ impl<'g, T: Game> GameBuilder<'g, T> {
 
             renderer,
             texture_manager: None,
+            tilemap: None,
             game_obj: T::setup(),
         }
     }
@@ -89,27 +96,43 @@ impl<'g, T: Game> GameBuilder<'g, T> {
         self.renderer
             .texture_layers
             .sort_by(|a, b| a.id.partial_cmp(&b.id).unwrap());
-        dbg!(&self.renderer.texture_layers);
 
+        self
+    }
+
+    pub fn add_tilemap(mut self, tilemap: TileMap) -> Self {
+        self.tilemap = Some(Rc::new(RefCell::new(tilemap)));
         self
     }
 
     pub fn run(mut self) -> Result<(), Box<dyn Error>> {
         if let Some(tm) = &self.texture_manager {
-            tm.borrow_mut()
+            tm.as_ref()
+                .borrow_mut()
                 .load_textures(&mut *self.renderer.rl(), &self.renderer.rt())?;
         }
 
         while self.game_obj.is_running() {
             self.game_obj.handle_events(&self.renderer.rl());
             self.game_obj.update();
+
+            // Add texture_manager if it exists
             if let Some(tm) = &self.texture_manager {
-                self.game_obj.render(
-                    &mut self.renderer,
-                    &Some(TextureManagerRef(tm.as_ref().borrow())),
-                )
+                if let Some(tilemap) = &self.tilemap {
+                    self.game_obj.render(
+                        &mut self.renderer,
+                        &Some(TextureManagerRef(tm.as_ref().borrow())),
+                        &mut Some(TileMapRef(tilemap.as_ref().borrow_mut())),
+                    );
+                } else {
+                    self.game_obj.render(
+                        &mut self.renderer,
+                        &Some(TextureManagerRef(tm.as_ref().borrow())),
+                        &mut None,
+                    );
+                }
             } else {
-                self.game_obj.render(&mut self.renderer, &None);
+                self.game_obj.render(&mut self.renderer, &None, &mut None);
             }
         }
 

@@ -11,14 +11,18 @@ impl Drawable for MyGame {
         &mut self,
         renderer: &Renderer,
         texture_manager: &Option<TextureManagerRef>,
-        _: &mut Option<TileMapRef>,
+        tilemap: &mut Option<TileMapRef>,
     ) {
-        let mut rl = renderer.rl();
-        let mut d = rl.begin_drawing(renderer.rt());
+        {
+            let mut rl = renderer.rl();
+            let mut d = rl.begin_drawing(renderer.rt());
 
-        renderer
-            .draw_texture_layers(&mut d, texture_manager.as_ref().unwrap())
-            .unwrap();
+            renderer
+                .draw_texture_layers(&mut d, texture_manager.as_ref().unwrap())
+                .unwrap();
+        }
+
+        renderer.draw_tilemap(tilemap, texture_manager);
     }
 }
 
@@ -52,6 +56,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut texture_manager = TextureManager::new();
     texture_manager.add_texture("bg", "examples/assets/bg.png");
     texture_manager.add_texture("person", "examples/assets/person.png");
+    texture_manager.add_texture("water", "examples/assets/tileset/water.png");
+    texture_manager.add_texture("ground", "examples/assets/tileset/ground.png");
 
     let bg_layer: TextureLayer = Layer::default().add_obj(
         &"bg",
@@ -62,11 +68,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     let player_layer: TextureLayer =
         Layer::init(1).add_obj(&"person", None, Rectangle::new(180., 670., 60., 60.), 0.);
 
-    dbg!(bg_layer.id(), player_layer.id());
+    let mut tileset = TileSet::new(TileSetID::NumberedTileSet(0));
+    tileset.add_tile_type("water");
+    tileset.add_tile_type("ground");
 
-    GameBuilder::<MyGame>::init("Layers", (800, 800))
+    let tilemap = TileMap::init(
+        (800 / 32, 800 / 32).into(),
+        (32, 32).into(),
+        Box::new(|_, y| {
+            if y > 600 / 32 {
+                (TileSetID::NumberedTileSet(0), 0)
+            } else {
+                (TileSetID::NumberedTileSet(0), 1)
+            }
+        }),
+    )
+    .add_tileset(tileset);
+
+    GameBuilder::<MyGame>::init("Tilemap", (800, 800))
         .add_texture_manager(texture_manager)
         .add_texture_layers(vec![bg_layer, player_layer])
+        .add_tilemap(tilemap)
         .run()?;
 
     Ok(())
