@@ -3,12 +3,17 @@ use std::{cell::Ref, collections::HashMap};
 use raylib::{texture::Texture2D, RaylibHandle, RaylibThread};
 
 pub struct Texture {
-    name: String,
+    pub(crate) name: String,
     path: String,
     raw_texture: Option<Texture2D>,
 }
 
-// TODO: Make Texture its own struct (with path and raw_texture as fields)
+impl Texture {
+    pub fn raw_texture(&self) -> Option<&Texture2D> {
+        self.raw_texture.as_ref()
+    }
+}
+
 pub struct TextureManager {
     textures: Vec<Texture>,
 }
@@ -52,10 +57,10 @@ impl TextureManager {
         Ok(())
     }
 
-    pub fn get_texture(&self, name: &str) -> Option<&Texture2D> {
+    pub fn get_texture(&self, name: &str) -> Option<&Texture> {
         for texture in &self.textures {
             if texture.name == name {
-                return texture.raw_texture.as_ref();
+                return Some(texture);
             }
         }
 
@@ -66,7 +71,7 @@ impl TextureManager {
 pub struct TextureManagerRef<'a>(pub(crate) Ref<'a, TextureManager>);
 
 impl<'a> TextureManagerRef<'a> {
-    pub fn get_texture(&self, name: &str) -> Option<&Texture2D> {
+    pub fn get_texture(&self, name: &str) -> Option<&Texture> {
         self.0.get_texture(name)
     }
 }

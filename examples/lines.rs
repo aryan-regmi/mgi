@@ -9,7 +9,7 @@ struct MyGame {
 impl Drawable for MyGame {
     fn update(&mut self) {}
 
-    fn render(&mut self, renderer: &Renderer, _tm: Option<TextureManagerRef>) {
+    fn render(&mut self, renderer: &Renderer, _tm: &Option<TextureManagerRef>) {
         let mut rl = renderer.rl();
         let mut d = rl.begin_drawing(renderer.rt());
 

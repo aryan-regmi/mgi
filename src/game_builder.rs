@@ -1,4 +1,7 @@
-use crate::prelude::TextureManagerRef;
+use crate::{
+    layers::{Layer, TextureLayer},
+    prelude::{Texture, TextureManagerRef},
+};
 use std::{cell::RefCell, error::Error, rc::Rc};
 
 use raylib::RaylibHandle;
@@ -7,29 +10,29 @@ use crate::{prelude::TextureManager, renderer::Renderer, utils::Vec2};
 
 pub trait Drawable {
     fn update(&mut self);
-    fn render(&mut self, renderer: &Renderer, texture_manager: Option<TextureManagerRef>);
+    fn render(&mut self, renderer: &Renderer, texture_manager: &Option<TextureManagerRef>);
 }
 
-pub trait Game: Drawable + 'static {
+pub trait Game: Drawable {
     fn setup() -> Self;
     fn is_running(&self) -> bool;
     fn stop(&mut self);
     fn handle_events(&mut self, rl: &RaylibHandle);
 }
 
-pub struct GameBuilder<T: Game> {
+pub struct GameBuilder<'g, T: Game> {
     // Game Window Configs
     size: Vec2,
     resizeable: bool,
     fullscreen: bool,
 
     // Internal Configs
-    renderer: Renderer,
+    renderer: Renderer<'g>,
     texture_manager: Option<Rc<RefCell<TextureManager>>>,
     game_obj: T,
 }
 
-impl<T: Game> GameBuilder<T> {
+impl<'g, T: Game> GameBuilder<'g, T> {
     pub fn init(title: &str, size: (i32, i32)) -> Self {
         // Initalize raylib
         let (mut rl, rt) = raylib::init().title(title).size(size.0, size.1).build();
@@ -69,6 +72,18 @@ impl<T: Game> GameBuilder<T> {
         self
     }
 
+    pub fn add_texture_layer(mut self, layer: TextureLayer<'g>) -> Self {
+        self.renderer.texture_layers.push(layer);
+        self
+    }
+
+    pub fn add_texture_layers(mut self, layers: Vec<TextureLayer<'g>>) -> Self {
+        for layer in layers {
+            self.renderer.texture_layers.push(layer);
+        }
+        self
+    }
+
     pub fn run(mut self) -> Result<(), Box<dyn Error>> {
         if let Some(tm) = &self.texture_manager {
             tm.borrow_mut()
@@ -81,10 +96,10 @@ impl<T: Game> GameBuilder<T> {
             if let Some(tm) = &self.texture_manager {
                 self.game_obj.render(
                     &mut self.renderer,
-                    Some(TextureManagerRef(tm.as_ref().borrow())),
+                    &Some(TextureManagerRef(tm.as_ref().borrow())),
                 )
             } else {
-                self.game_obj.render(&mut self.renderer, None);
+                self.game_obj.render(&mut self.renderer, &None);
             }
         }
 

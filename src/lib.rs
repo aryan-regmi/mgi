@@ -1,4 +1,5 @@
 pub mod game_builder;
+pub mod layers;
 pub mod renderer;
 pub mod textures;
 pub mod tilemap;
@@ -6,6 +7,7 @@ pub mod utils;
 
 pub mod prelude {
     pub use crate::game_builder::*;
+    pub use crate::layers::*;
     pub use crate::renderer::*;
     pub use crate::textures::*;
     pub use crate::tilemap::*;

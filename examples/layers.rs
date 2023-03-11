@@ -13,25 +13,9 @@ impl Drawable for MyGame {
         let mut rl = renderer.rl();
         let mut d = rl.begin_drawing(renderer.rt());
 
-        d.clear_background(Color::BLACK);
-
-        let tm = texture_manager.as_ref().unwrap();
-        let bg = tm.get_texture("bg").unwrap();
-        let person = tm.get_texture("person").unwrap();
-        d.draw_texture_rec(
-            bg.raw_texture().unwrap(),
-            Rectangle::new(600., 0., 800., 800.),
-            Vector2::new(0., 0.),
-            Color::WHITE,
-        );
-        d.draw_texture_pro(
-            person.raw_texture().unwrap(),
-            Rectangle::new(0., 0., 32., 32.),
-            Rectangle::new(180., 670., 60., 60.),
-            Vector2::new(0., 0.),
-            -20.,
-            Color::WHITE,
-        )
+        renderer
+            .draw_texture_layers(&mut d, texture_manager.as_ref().unwrap())
+            .unwrap();
     }
 }
 
@@ -62,8 +46,18 @@ fn main() -> Result<(), Box<dyn Error>> {
     texture_manager.add_texture("bg", "examples/assets/bg.png");
     texture_manager.add_texture("person", "examples/assets/person.png");
 
-    GameBuilder::<MyGame>::init("Textures", (800, 800))
+    let bg_layer: TextureLayer = Layer::init().add_obj(
+        &"bg",
+        Some(Rectangle::new(600., 0., 800., 800.)),
+        Rectangle::new(0., 0., 800., 800.),
+        0.,
+    );
+    let player_layer: TextureLayer =
+        Layer::init().add_obj(&"person", None, Rectangle::new(180., 670., 60., 60.), 0.);
+
+    GameBuilder::<MyGame>::init("Layers", (800, 800))
         .add_texture_manager(texture_manager)
+        .add_texture_layers(vec![bg_layer, player_layer])
         .run()?;
 
     Ok(())
