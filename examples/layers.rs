@@ -7,8 +7,6 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn update(&mut self) {}
-
     fn render(&mut self, renderer: &Renderer, texture_manager: &Option<TextureManagerRef>) {
         let mut rl = renderer.rl();
         let mut d = rl.begin_drawing(renderer.rt());
@@ -17,6 +15,10 @@ impl Drawable for MyGame {
             .draw_texture_layers(&mut d, texture_manager.as_ref().unwrap())
             .unwrap();
     }
+}
+
+impl Updateable for MyGame {
+    fn update(&mut self) {}
 }
 
 impl Game for MyGame {
@@ -46,14 +48,16 @@ fn main() -> Result<(), Box<dyn Error>> {
     texture_manager.add_texture("bg", "examples/assets/bg.png");
     texture_manager.add_texture("person", "examples/assets/person.png");
 
-    let bg_layer: TextureLayer = Layer::init().add_obj(
+    let bg_layer: TextureLayer = Layer::default().add_obj(
         &"bg",
         Some(Rectangle::new(600., 0., 800., 800.)),
         Rectangle::new(0., 0., 800., 800.),
         0.,
     );
     let player_layer: TextureLayer =
-        Layer::init().add_obj(&"person", None, Rectangle::new(180., 670., 60., 60.), 0.);
+        Layer::init(1).add_obj(&"person", None, Rectangle::new(180., 670., 60., 60.), 0.);
+
+    dbg!(bg_layer.id(), player_layer.id());
 
     GameBuilder::<MyGame>::init("Layers", (800, 800))
         .add_texture_manager(texture_manager)

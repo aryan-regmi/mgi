@@ -71,8 +71,6 @@ impl<'t> TileMap<'t> {
 }
 
 impl<'t> Drawable for TileMap<'t> {
-    fn update(&mut self) {}
-
     fn render(
         &mut self,
         renderer: &crate::prelude::Renderer,

@@ -7,8 +7,6 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn update(&mut self) {}
-
     fn render(&mut self, renderer: &Renderer, texture_manager: &Option<TextureManagerRef>) {
         let mut rl = renderer.rl();
         let mut d = rl.begin_drawing(renderer.rt());
@@ -33,6 +31,10 @@ impl Drawable for MyGame {
             Color::WHITE,
         )
     }
+}
+
+impl Updateable for MyGame {
+    fn update(&mut self) {}
 }
 
 impl Game for MyGame {

@@ -2,18 +2,21 @@ use crate::{
     layers::{Layer, TextureLayer},
     prelude::{Texture, TextureManagerRef},
 };
-use std::{cell::RefCell, cmp::Ordering, error::Error, rc::Rc};
+use std::{cell::RefCell, error::Error, rc::Rc};
 
 use raylib::RaylibHandle;
 
 use crate::{prelude::TextureManager, renderer::Renderer, utils::Vec2};
 
 pub trait Drawable {
-    fn update(&mut self);
     fn render(&mut self, renderer: &Renderer, texture_manager: &Option<TextureManagerRef>);
 }
 
-pub trait Game: Drawable {
+pub trait Updateable {
+    fn update(&mut self);
+}
+
+pub trait Game: Drawable + Updateable {
     fn setup() -> Self;
     fn is_running(&self) -> bool;
     fn stop(&mut self);
@@ -86,6 +89,8 @@ impl<'g, T: Game> GameBuilder<'g, T> {
         self.renderer
             .texture_layers
             .sort_by(|a, b| a.id.partial_cmp(&b.id).unwrap());
+        dbg!(&self.renderer.texture_layers);
+
         self
     }
 
