@@ -7,20 +7,16 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(
-        &mut self,
-        renderer: &Renderer,
-        texture_manager: &Option<TextureManagerRef>,
-        _: &mut Option<TileMapRef>,
-    ) {
+    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) {
         let mut rl = renderer.rl();
         let mut d = rl.begin_drawing(renderer.rt());
 
         d.clear_background(Color::BLACK);
 
-        let tm = texture_manager.as_ref().unwrap();
-        let bg = tm.get_texture("bg").unwrap();
-        let person = tm.get_texture("person").unwrap();
+        // TODO: Proper error handling
+        let tm = resources.texture_manager();
+        let bg = tm.as_ref().unwrap().get_texture("bg").unwrap();
+        let person = tm.as_ref().unwrap().get_texture("person").unwrap();
         d.draw_texture_rec(
             bg.raw_texture().unwrap(),
             Rectangle::new(600., 0., 800., 800.),

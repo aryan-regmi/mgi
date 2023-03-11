@@ -7,12 +7,7 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(
-        &mut self,
-        renderer: &Renderer,
-        _: &Option<TextureManagerRef>,
-        _: &mut Option<TileMapRef>,
-    ) {
+    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) {
         let mut rl = renderer.rl();
         let mut d = rl.begin_drawing(renderer.rt());
 

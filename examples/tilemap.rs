@@ -7,17 +7,12 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(
-        &mut self,
-        renderer: &Renderer,
-        texture_manager: &Option<TextureManagerRef>,
-        tilemap: &mut Option<TileMapRef>,
-    ) {
+    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) {
         renderer
-            .draw_texture_layers(texture_manager.as_ref().unwrap())
+            .draw_texture_layers(resources.texture_manager().as_ref().unwrap())
             .unwrap();
 
-        renderer.draw_tilemap(tilemap, texture_manager);
+        renderer.draw_tilemap(resources);
     }
 }
 

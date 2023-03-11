@@ -1,14 +1,14 @@
 use std::{borrow::Borrow, cell::RefMut, error::Error};
 
 use raylib::{
-    prelude::{Color, RaylibDraw, RaylibDrawHandle, Rectangle, Vector2},
+    prelude::{Color, RaylibDraw, Rectangle, Vector2},
     RaylibHandle, RaylibThread,
 };
 
 use crate::{
-    game_builder::Drawable,
+    game_builder::{Drawable, ResourceManager},
     layers::TextureLayer,
-    prelude::{TextureManagerRef, TileMapRef},
+    prelude::TextureManagerRef,
     utils::{RenderContext, RenderThread},
 };
 
@@ -81,16 +81,9 @@ impl<'l> Renderer<'l> {
     }
 
     // TODO: Make sure tilemap exists first
-    pub fn draw_tilemap(
-        &self,
-        tilemap: &mut Option<TileMapRef>,
-        texture_manager: &Option<TextureManagerRef>,
-    ) {
+    pub fn draw_tilemap(&self, resources: &ResourceManager) {
         // TODO: Proper error handlin
-        std::borrow::BorrowMut::borrow_mut(&mut tilemap.as_mut().unwrap().0).render(
-            self,
-            texture_manager,
-            &mut None,
-        )
+        std::borrow::BorrowMut::borrow_mut(&mut resources.tilemap().as_mut().unwrap().0)
+            .render(self, resources)
     }
 }

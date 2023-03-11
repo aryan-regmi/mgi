@@ -5,7 +5,10 @@ use raylib::{
     texture::RaylibTexture2D,
 };
 
-use crate::{game_builder::Drawable, utils::Vec2};
+use crate::{
+    game_builder::{Drawable, ResourceManager},
+    utils::Vec2,
+};
 
 struct Tile {
     // Position in number of tiles
@@ -84,12 +87,7 @@ impl TileMap {
 }
 
 impl Drawable for TileMap {
-    fn render(
-        &mut self,
-        renderer: &crate::prelude::Renderer,
-        texture_manager: &Option<crate::prelude::TextureManagerRef>,
-        _: &mut Option<TileMapRef>,
-    ) {
+    fn render(&mut self, renderer: &crate::prelude::Renderer, resources: &ResourceManager) {
         let (mut rl, rt) = (renderer.rl(), renderer.rt());
         let (w, h) = (self.size.x, self.size.y);
         let mut d = rl.begin_drawing(rt);
@@ -114,6 +112,7 @@ impl Drawable for TileMap {
 
                 // Get texture from corresponding tileset
                 // TODO: Proper error handling
+                let texture_manager = resources.texture_manager();
                 let texture = texture_manager
                     .as_ref()
                     .unwrap()

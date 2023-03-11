@@ -8,18 +8,31 @@ use raylib::RaylibHandle;
 
 use crate::{prelude::TextureManager, renderer::Renderer, utils::Vec2};
 
-// pub struct ResourceManager {
-//     texture_manager: Option<Rc<RefCell<TextureManager>>>,
-//     tilemap: Option<Rc<RefCell<TileMap>>>,
-// }
+pub struct ResourceManager {
+    texture_manager: Option<Rc<RefCell<TextureManager>>>,
+    tilemap: Option<Rc<RefCell<TileMap>>>,
+}
+
+impl ResourceManager {
+    pub fn texture_manager(&self) -> Option<TextureManagerRef> {
+        if let Some(tm) = &self.texture_manager {
+            Some(TextureManagerRef(tm.as_ref().borrow()))
+        } else {
+            None
+        }
+    }
+
+    pub fn tilemap(&self) -> Option<TileMapRef> {
+        if let Some(tm) = &self.tilemap {
+            Some(TileMapRef(tm.as_ref().borrow_mut()))
+        } else {
+            None
+        }
+    }
+}
 
 pub trait Drawable {
-    fn render(
-        &mut self,
-        renderer: &Renderer,
-        texture_manager: &Option<TextureManagerRef>,
-        tilemap: &mut Option<TileMapRef>,
-    );
+    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager);
 }
 
 pub trait Updateable {
@@ -41,8 +54,7 @@ pub struct GameBuilder<'g, T: Game> {
 
     // Internal Configs
     renderer: Renderer<'g>,
-    texture_manager: Option<Rc<RefCell<TextureManager>>>,
-    tilemap: Option<Rc<RefCell<TileMap>>>,
+    resources: ResourceManager,
     game_obj: T,
 }
 
@@ -61,8 +73,10 @@ impl<'g, T: Game> GameBuilder<'g, T> {
             fullscreen: false,
 
             renderer,
-            texture_manager: None,
-            tilemap: None,
+            resources: ResourceManager {
+                texture_manager: None,
+                tilemap: None,
+            },
             game_obj: T::setup(),
         }
     }
@@ -83,7 +97,7 @@ impl<'g, T: Game> GameBuilder<'g, T> {
     }
 
     pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
-        self.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
+        self.resources.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
         self
     }
 
@@ -106,12 +120,12 @@ impl<'g, T: Game> GameBuilder<'g, T> {
     }
 
     pub fn add_tilemap(mut self, tilemap: TileMap) -> Self {
-        self.tilemap = Some(Rc::new(RefCell::new(tilemap)));
+        self.resources.tilemap = Some(Rc::new(RefCell::new(tilemap)));
         self
     }
 
     pub fn run(mut self) -> Result<(), Box<dyn Error>> {
-        if let Some(tm) = &self.texture_manager {
+        if let Some(tm) = &self.resources.texture_manager {
             tm.as_ref()
                 .borrow_mut()
                 .load_textures(&mut *self.renderer.rl(), &self.renderer.rt())?;
@@ -120,25 +134,7 @@ impl<'g, T: Game> GameBuilder<'g, T> {
         while self.game_obj.is_running() {
             self.game_obj.handle_events(&self.renderer.rl());
             self.game_obj.update();
-
-            // Add texture_manager if it exists
-            if let Some(tm) = &self.texture_manager {
-                if let Some(tilemap) = &self.tilemap {
-                    self.game_obj.render(
-                        &mut self.renderer,
-                        &Some(TextureManagerRef(tm.as_ref().borrow())),
-                        &mut Some(TileMapRef(tilemap.as_ref().borrow_mut())),
-                    );
-                } else {
-                    self.game_obj.render(
-                        &mut self.renderer,
-                        &Some(TextureManagerRef(tm.as_ref().borrow())),
-                        &mut None,
-                    );
-                }
-            } else {
-                self.game_obj.render(&mut self.renderer, &None, &mut None);
-            }
+            self.game_obj.render(&mut self.renderer, &self.resources);
         }
 
         Ok(())
