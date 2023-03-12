@@ -1,7 +1,5 @@
-use std::cell::RefMut;
-
-use mgi::prelude::{Game, GameBuilder};
-use raylib::RaylibHandle;
+use mgi::prelude::{Game, GameBuilder, Rect};
+use raylib::prelude::{Color, KeyboardKey};
 
 struct MyGame {
     running: bool,
@@ -22,11 +20,16 @@ impl Game for MyGame {
         self.running
     }
 
-    fn handle_events(&mut self, rl: RefMut<RaylibHandle>) {
-        if rl.is_key_pressed(raylib::prelude::KeyboardKey::KEY_ESCAPE) {
-            dbg!("Stopping");
+    fn update(&mut self, ctx: &mut mgi::prelude::MgiContext) {
+        if let Some(KeyboardKey::KEY_ESCAPE) = ctx.pressed_key() {
             self.running = false;
         }
+    }
+
+    fn render(&mut self, ctx: &mut mgi::prelude::MgiContext) {
+        ctx.clear_background(Color::WHITE);
+        ctx.draw_rect(Rect::new(0, 0, 20, 20, Color::RED), 1);
+        ctx.fill_rect(Rect::new(0, 0, 20, 20, Color::BLUE), 0);
     }
 }
 
