@@ -3,3 +3,6 @@ pub(crate) use renderer::*;
 
 pub mod rect;
 pub use rect::*;
+
+pub mod text;
+pub use text::*;

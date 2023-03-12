@@ -1,11 +1,11 @@
 use raylib::{
-    prelude::{Color, KeyboardKey, RaylibDraw},
-    RaylibHandle, RaylibThread,
+    prelude::{Color, KeyboardKey, RaylibDraw, TraceLogLevel},
+    set_trace_log, RaylibHandle, RaylibThread,
 };
 
 use std::cell::RefCell;
 
-use crate::renderer::Renderer;
+use crate::renderer::{Drawable, Renderer};
 
 pub trait Game {
     fn init() -> Self;
@@ -27,6 +27,17 @@ impl Context {
     pub fn clear_background(&mut self, color: Color) {
         self.renderer.clear_color = color;
     }
+
+    pub fn draw<T: Drawable + 'static>(&mut self, drawable: T, layer: usize) {
+        // If the layer already exists, just add to it
+        if self.renderer.layers.len() > layer {
+            self.renderer.layers[layer].push(Box::new(drawable));
+            return;
+        }
+
+        // Create new layer if the corresponding layer doesn't exist
+        self.renderer.layers.push(vec![Box::new(drawable)])
+    }
 }
 
 // TODO: Add a layer manager that can take named layers and convert to vector indices at the end!
@@ -38,8 +49,11 @@ pub struct GameBuilder<T: Game> {
 }
 
 impl<T: Game> GameBuilder<T> {
-    pub fn init() -> Self {
-        let (mut rl, rt) = raylib::init().build();
+    pub fn init(title: &str, size: (i32, i32)) -> Self {
+        // TODO: Make this a parameter
+        set_trace_log(TraceLogLevel::LOG_ERROR);
+
+        let (mut rl, rt) = raylib::init().size(size.0, size.1).title(title).build();
         rl.set_exit_key(None); // So <Esc> doesn't quit by default
 
         Self {

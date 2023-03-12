@@ -20,31 +20,25 @@ impl Rect {
             fill: false,
         }
     }
+
+    pub fn from_center(x: i32, y: i32, width: i32, height: i32, color: Color) -> Self {
+        let top_left_x = x - width / 2;
+        let top_left_y = y - height / 2;
+        let position = (top_left_x, top_left_y).into();
+
+        Self {
+            position,
+            size: (width, height).into(),
+            color,
+            fill: false,
+        }
+    }
 }
 
 impl Context {
-    pub fn draw_rect(&mut self, rect: Rect, layer: usize) {
-        // If the layer already exists, just add to it
-        if self.renderer.layers.len() > layer {
-            self.renderer.layers[layer].push(Box::new(rect));
-            return;
-        }
-
-        // Create new layer if the corresponding layer doesn't exist
-        self.renderer.layers.push(vec![Box::new(rect)])
-    }
-
     pub fn fill_rect(&mut self, mut rect: Rect, layer: usize) {
         rect.fill = true;
-
-        // If the layer already exists, just add to it
-        if self.renderer.layers.len() > layer {
-            self.renderer.layers[layer].push(Box::new(rect));
-            return;
-        }
-
-        // Create new layer if the corresponding layer doesn't exist
-        self.renderer.layers.push(vec![Box::new(rect)])
+        self.draw(rect, layer);
     }
 }
 

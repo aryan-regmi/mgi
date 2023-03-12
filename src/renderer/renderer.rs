@@ -1,7 +1,7 @@
 use raylib::color::Color;
 use raylib::drawing::RaylibDrawHandle;
 
-pub(crate) trait Drawable {
+pub trait Drawable {
     fn draw(&mut self, pen: &mut RaylibDrawHandle);
 }
 
