@@ -5,6 +5,8 @@ use raylib::RaylibHandle;
 
 use crate::{prelude::TextureManager, renderer::Renderer, utils::Vec2};
 
+pub type MgiResult<T> = Result<T, Box<dyn Error>>;
+
 pub struct ResourceManager {
     texture_manager: Option<Rc<RefCell<TextureManager>>>,
     tilemap: Option<Rc<RefCell<TileMap>>>,
@@ -29,11 +31,11 @@ impl ResourceManager {
 }
 
 pub trait Drawable {
-    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager);
+    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) -> MgiResult<()>;
 }
 
 pub trait Updateable {
-    fn update(&mut self);
+    fn update(&mut self) -> MgiResult<()>;
 }
 
 pub trait Game: Drawable + Updateable {
@@ -103,7 +105,7 @@ impl<'g, T: Game> GameBuilder<'g, T> {
         self
     }
 
-    pub fn run(mut self) -> Result<(), Box<dyn Error>> {
+    pub fn run(mut self) -> MgiResult<()> {
         if let Some(tm) = &self.resources.texture_manager {
             tm.as_ref()
                 .borrow_mut()
@@ -112,8 +114,8 @@ impl<'g, T: Game> GameBuilder<'g, T> {
 
         while self.game_obj.is_running() {
             self.game_obj.handle_events(&self.renderer.rl());
-            self.game_obj.update();
-            self.game_obj.render(&mut self.renderer, &self.resources);
+            self.game_obj.update()?;
+            self.game_obj.render(&mut self.renderer, &self.resources)?;
         }
 
         Ok(())

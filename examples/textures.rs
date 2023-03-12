@@ -7,35 +7,37 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) {
-        let mut rl = renderer.rl();
-        let mut d = rl.begin_drawing(renderer.rt());
+    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) -> MgiResult<()> {
+        renderer.draw(&|d| {
+            d.clear_background(Color::BLACK);
 
-        d.clear_background(Color::BLACK);
+            let tm = resources.texture_manager();
+            let bg = tm.as_ref().unwrap().get_texture("bg").unwrap();
+            let person = tm.as_ref().unwrap().get_texture("person").unwrap();
+            d.draw_texture_rec(
+                bg.raw_texture().unwrap(),
+                Rectangle::new(600., 0., 800., 800.),
+                Vector2::new(0., 0.),
+                Color::WHITE,
+            );
+            d.draw_texture_pro(
+                person.raw_texture().unwrap(),
+                Rectangle::new(0., 0., 32., 32.),
+                Rectangle::new(180., 670., 60., 60.),
+                Vector2::new(0., 0.),
+                -20.,
+                Color::WHITE,
+            );
+        });
 
-        // TODO: Proper error handling
-        let tm = resources.texture_manager();
-        let bg = tm.as_ref().unwrap().get_texture("bg").unwrap();
-        let person = tm.as_ref().unwrap().get_texture("person").unwrap();
-        d.draw_texture_rec(
-            bg.raw_texture().unwrap(),
-            Rectangle::new(600., 0., 800., 800.),
-            Vector2::new(0., 0.),
-            Color::WHITE,
-        );
-        d.draw_texture_pro(
-            person.raw_texture().unwrap(),
-            Rectangle::new(0., 0., 32., 32.),
-            Rectangle::new(180., 670., 60., 60.),
-            Vector2::new(0., 0.),
-            -20.,
-            Color::WHITE,
-        )
+        Ok(())
     }
 }
 
 impl Updateable for MyGame {
-    fn update(&mut self) {}
+    fn update(&mut self) -> MgiResult<()> {
+        Ok(())
+    }
 }
 
 impl Game for MyGame {

@@ -7,25 +7,28 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) {
-        let mut rl = renderer.rl();
-        let mut d = rl.begin_drawing(renderer.rt());
+    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) -> MgiResult<()> {
+        renderer.draw(&|d| {
+            d.clear_background(Color::BLACK);
 
-        d.clear_background(Color::BLACK);
+            d.draw_line(0, 0, 400, 400, Color::RED);
+            d.draw_line(800, 0, 400, 400, Color::BLUE);
+            d.draw_line(0, 800, 400, 400, Color::GREEN);
+            d.draw_line(800, 800, 400, 400, Color::WHITE);
+            d.draw_line(0, 400, 400, 400, Color::YELLOW);
+            d.draw_line(800, 400, 400, 400, Color::MAGENTA);
+            d.draw_line(400, 0, 400, 400, Color::GOLD);
+            d.draw_line(400, 800, 400, 400, Color::MAROON);
+        });
 
-        d.draw_line(0, 0, 400, 400, Color::RED);
-        d.draw_line(800, 0, 400, 400, Color::BLUE);
-        d.draw_line(0, 800, 400, 400, Color::GREEN);
-        d.draw_line(800, 800, 400, 400, Color::WHITE);
-        d.draw_line(0, 400, 400, 400, Color::YELLOW);
-        d.draw_line(800, 400, 400, 400, Color::MAGENTA);
-        d.draw_line(400, 0, 400, 400, Color::GOLD);
-        d.draw_line(400, 800, 400, 400, Color::MAROON);
+        Ok(())
     }
 }
 
 impl Updateable for MyGame {
-    fn update(&mut self) {}
+    fn update(&mut self) -> MgiResult<()> {
+        Ok(())
+    }
 }
 
 impl Game for MyGame {

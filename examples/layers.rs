@@ -7,15 +7,20 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) {
+    fn render(&mut self, _renderer: &Renderer, _resources: &ResourceManager) -> MgiResult<()> {
         // renderer
         //     .draw_texture_layers(resources.texture_manager().as_ref().unwrap())
         //     .unwrap();
+        //
+
+        Ok(())
     }
 }
 
 impl Updateable for MyGame {
-    fn update(&mut self) {}
+    fn update(&mut self) -> MgiResult<()> {
+        Ok(())
+    }
 }
 
 impl Game for MyGame {

@@ -1,21 +1,16 @@
-use std::{borrow::Borrow, cell::RefMut, error::Error};
+use std::{borrow::Borrow, cell::RefMut, collections::HashMap};
 
-use raylib::{
-    prelude::{Color, RaylibDraw, Rectangle, Vector2},
-    RaylibHandle, RaylibThread,
-};
+use raylib::{prelude::RaylibDrawHandle, RaylibHandle, RaylibThread};
 
 use crate::{
-    game_builder::{Drawable, ResourceManager},
     layers::Layer,
-    prelude::TextureManagerRef,
     utils::{RenderContext, RenderThread},
 };
 
 pub struct Renderer<'l> {
     rl: RenderContext,
     rt: RenderThread,
-    layers: Vec<&'l dyn Layer>,
+    layers: HashMap<usize, Vec<&'l dyn Layer>>,
 }
 
 impl<'l> Renderer<'l> {
@@ -23,22 +18,26 @@ impl<'l> Renderer<'l> {
         Self {
             rl,
             rt,
-            layers: Vec::new(),
+            layers: HashMap::new(),
         }
     }
 
-    pub fn rl(&self) -> RefMut<RaylibHandle> {
+    pub(crate) fn rl(&self) -> RefMut<RaylibHandle> {
         self.rl.borrow_mut()
     }
 
-    pub fn rt(&self) -> &RaylibThread {
+    pub(crate) fn rt(&self) -> &RaylibThread {
         self.rt.borrow()
     }
 
-    // // TODO: Make sure tilemap exists first
-    // pub fn draw_tilemap(&self, resources: &ResourceManager) {
-    //     // TODO: Proper error handlin
-    //     std::borrow::BorrowMut::borrow_mut(&mut resources.tilemap().as_mut().unwrap().0)
-    //         .render(self, resources)
-    // }
+    pub fn draw(&self, draw_fn: &dyn Fn(&mut RaylibDrawHandle)) {
+        let mut rl = self.rl();
+        let mut d = rl.begin_drawing(self.rt());
+
+        draw_fn(&mut d)
+    }
+
+    pub fn layers(&self) -> &HashMap<usize, Vec<&'l dyn Layer>> {
+        &self.layers
+    }
 }

@@ -7,13 +7,17 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) {
-        resources.tilemap().unwrap().render(renderer, resources);
+    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) -> MgiResult<()> {
+        resources.tilemap().unwrap().render(renderer, resources)?;
+
+        Ok(())
     }
 }
 
 impl Updateable for MyGame {
-    fn update(&mut self) {}
+    fn update(&mut self) -> MgiResult<()> {
+        Ok(())
+    }
 }
 
 impl Game for MyGame {

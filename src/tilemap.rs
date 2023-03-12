@@ -6,17 +6,19 @@ use raylib::{
 };
 
 use crate::{
-    game_builder::{Drawable, ResourceManager},
+    game_builder::{Drawable, MgiResult, ResourceManager},
     utils::Vec2,
 };
 
 struct Tile {
-    // Position in number of tiles
+    /// Position in number of tiles
     position: Vec2,
 
-    // Index in the tileset that represents the underlying texture
+    /// Index in the tileset that represents the underlying texture
     idx: usize,
 
+    #[allow(unused)]
+    /// The TileSet this tile belongs to.
     tileset: TileSetID,
 }
 
@@ -26,6 +28,7 @@ pub enum TileSetID {
 }
 
 pub struct TileSet {
+    #[allow(unused)]
     id: TileSetID,
     tile_texture_names: Vec<&'static str>,
 }
@@ -43,6 +46,7 @@ impl TileSet {
         self.tile_texture_names.push(texture);
     }
 
+    #[allow(unused)]
     /// Returns the index of the tileset where the texture of `name` is stored.
     fn get_idx_from_name(&self, name: &str) -> Option<usize> {
         for (idx, tile_texture_name) in self.tile_texture_names.iter().enumerate() {
@@ -88,7 +92,11 @@ impl TileMap {
 }
 
 impl Drawable for TileMap {
-    fn render(&mut self, renderer: &crate::prelude::Renderer, resources: &ResourceManager) {
+    fn render(
+        &mut self,
+        renderer: &crate::prelude::Renderer,
+        resources: &ResourceManager,
+    ) -> MgiResult<()> {
         let (mut rl, rt) = (renderer.rl(), renderer.rt());
         let (w, h) = (self.size.x, self.size.y);
         let mut d = rl.begin_drawing(rt);
@@ -141,13 +149,19 @@ impl Drawable for TileMap {
                 );
             }
         }
+
+        Ok(())
     }
 }
 
 pub struct TileMapRef<'t>(pub(crate) RefMut<'t, TileMap>);
 
 impl<'t> Drawable for TileMapRef<'t> {
-    fn render(&mut self, renderer: &crate::prelude::Renderer, resources: &ResourceManager) {
+    fn render(
+        &mut self,
+        renderer: &crate::prelude::Renderer,
+        resources: &ResourceManager,
+    ) -> MgiResult<()> {
         self.0.render(renderer, resources)
     }
 }

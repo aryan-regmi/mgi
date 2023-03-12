@@ -7,17 +7,20 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) {
-        let mut rl = renderer.rl();
-        let mut d = rl.begin_drawing(renderer.rt());
+    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) -> MgiResult<()> {
+        renderer.draw(&|d| {
+            d.clear_background(Color::BLACK);
+            d.draw_text("HELLO WORLD!", 250, 400, 50, Color::RED);
+        });
 
-        d.clear_background(Color::BLACK);
-        d.draw_text("HELLO WORLD!", 250, 400, 50, Color::RED);
+        Ok(())
     }
 }
 
 impl Updateable for MyGame {
-    fn update(&mut self) {}
+    fn update(&mut self) -> MgiResult<()> {
+        Ok(())
+    }
 }
 
 impl Game for MyGame {

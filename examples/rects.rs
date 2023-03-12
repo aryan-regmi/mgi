@@ -7,21 +7,24 @@ struct MyGame {
 }
 
 impl Drawable for MyGame {
-    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) {
-        let mut rl = renderer.rl();
-        let mut d = rl.begin_drawing(renderer.rt());
+    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) -> MgiResult<()> {
+        renderer.draw(&|d| {
+            d.clear_background(Color::BLACK);
 
-        d.clear_background(Color::BLACK);
+            d.draw_rectangle(0, 0, 200, 200, Color::BLUE);
+            d.draw_rectangle(400, 400, 300, 100, Color::RED);
+            d.draw_rectangle_lines(0, 600, 400, 200, Color::GREEN);
+            d.draw_rectangle(50, 650, 300, 100, Color::GOLD);
+        });
 
-        d.draw_rectangle(0, 0, 200, 200, Color::BLUE);
-        d.draw_rectangle(400, 400, 300, 100, Color::RED);
-        d.draw_rectangle_lines(0, 600, 400, 200, Color::GREEN);
-        d.draw_rectangle(50, 650, 300, 100, Color::GOLD);
+        Ok(())
     }
 }
 
 impl Updateable for MyGame {
-    fn update(&mut self) {}
+    fn update(&mut self) -> MgiResult<()> {
+        Ok(())
+    }
 }
 
 impl Game for MyGame {
