@@ -1,30 +1,20 @@
-use std::error::Error;
+use std::cell::RefMut;
 
-use mgi::prelude::*;
+use mgi::prelude::{Game, GameBuilder};
+use raylib::RaylibHandle;
 
 struct MyGame {
     running: bool,
 }
 
-impl Drawable for MyGame {
-    fn render(&mut self, renderer: &Renderer, _: &ResourceManager) -> MgiResult<()> {
-        renderer.draw(&|d| {
-            d.clear_background(Color::BLACK);
-            d.draw_text("HELLO WORLD!", 250, 400, 50, Color::RED);
-        });
-
-        Ok(())
-    }
-}
-
-impl Updateable for MyGame {
-    fn update(&mut self) -> MgiResult<()> {
-        Ok(())
+impl MyGame {
+    fn hello_world() {
+        println!("HELLO_WORLD!");
     }
 }
 
 impl Game for MyGame {
-    fn setup() -> Self {
+    fn init() -> Self {
         Self { running: true }
     }
 
@@ -32,21 +22,16 @@ impl Game for MyGame {
         self.running
     }
 
-    fn stop(&mut self) {
-        self.running = false;
-    }
-
-    fn handle_events(&mut self, rl: &raylib::RaylibHandle) {
-        if rl.is_key_pressed(KeyboardKey::KEY_BACKSPACE)
-            || rl.is_key_pressed(KeyboardKey::KEY_ESCAPE)
-        {
-            self.stop();
+    fn handle_events(&mut self, rl: RefMut<RaylibHandle>) {
+        if rl.is_key_pressed(raylib::prelude::KeyboardKey::KEY_ESCAPE) {
+            dbg!("Stopping");
+            self.running = false;
         }
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
-    GameBuilder::<MyGame>::init("Hello World", (800, 800)).run()?;
-
-    Ok(())
+fn main() {
+    GameBuilder::<MyGame>::init()
+        .add_startup_system(MyGame::hello_world)
+        .run();
 }

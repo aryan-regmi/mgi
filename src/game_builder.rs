@@ -1,127 +1,44 @@
-use crate::prelude::{TextureManagerRef, TileMap, TileMapRef};
-use std::{cell::RefCell, error::Error, rc::Rc};
+use raylib::{RaylibHandle, RaylibThread};
+use std::cell::{RefCell, RefMut};
 
-use raylib::RaylibHandle;
-
-use crate::{prelude::TextureManager, renderer::Renderer, utils::Vec2};
-
-pub type MgiResult<T> = Result<T, Box<dyn Error>>;
-
-pub struct ResourceManager {
-    texture_manager: Option<Rc<RefCell<TextureManager>>>,
-    tilemap: Option<Rc<RefCell<TileMap>>>,
-}
-
-impl ResourceManager {
-    pub fn texture_manager(&self) -> Option<TextureManagerRef> {
-        if let Some(tm) = &self.texture_manager {
-            Some(TextureManagerRef(tm.as_ref().borrow()))
-        } else {
-            None
-        }
-    }
-
-    pub fn tilemap(&self) -> Option<TileMapRef> {
-        if let Some(tm) = &self.tilemap {
-            Some(TileMapRef(tm.as_ref().borrow_mut()))
-        } else {
-            None
-        }
-    }
-}
-
-pub trait Drawable {
-    fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) -> MgiResult<()>;
-    fn layer(&self) -> isize;
-    fn set_layer(&mut self, layer: isize);
-}
-
-pub trait Updateable {
-    fn update(&mut self) -> MgiResult<()>;
-}
-
-pub trait Game: Drawable + Updateable {
-    fn setup() -> Self;
+pub trait Game {
+    fn init() -> Self;
     fn is_running(&self) -> bool;
-    fn stop(&mut self);
-    fn handle_events(&mut self, rl: &RaylibHandle);
+    fn handle_events(&mut self, rl: RefMut<RaylibHandle>);
 }
 
-pub struct GameBuilder<'g, T: Game> {
-    // Game Window Configs
-    size: Vec2,
-    resizeable: bool,
-    fullscreen: bool,
-
-    // Internal Configs
-    renderer: Renderer<'g>,
-    resources: ResourceManager,
-    game_obj: T,
+pub struct GameBuilder<T: Game> {
+    rl: RefCell<RaylibHandle>,
+    rt: RaylibThread,
+    startup_systems: Vec<fn()>,
+    game: T,
 }
 
-impl<'g, T: Game> GameBuilder<'g, T> {
-    pub fn init(title: &str, size: (i32, i32)) -> Self {
-        // Initalize raylib
-        let (mut rl, rt) = raylib::init().title(title).size(size.0, size.1).build();
-        rl.set_exit_key(None);
-
-        let rc_rl = RefCell::new(rl);
-        let renderer = Renderer::new(Rc::new(rc_rl), Rc::new(rt));
+impl<T: Game> GameBuilder<T> {
+    pub fn init() -> Self {
+        let (mut rl, rt) = raylib::init().build();
+        // rl.set_exit_key(None); // So <Esc> doesn't quit by default
 
         Self {
-            size: size.into(),
-            resizeable: false,
-            fullscreen: false,
-
-            renderer,
-            resources: ResourceManager {
-                texture_manager: None,
-                tilemap: None,
-            },
-            game_obj: T::setup(),
+            rl: RefCell::new(rl),
+            rt,
+            startup_systems: Vec::new(),
+            game: T::init(),
         }
     }
 
-    pub fn set_size(mut self, width: u32, height: u32) -> Self {
-        self.size = (width, height).into();
+    pub fn add_startup_system(mut self, system: fn()) -> Self {
+        self.startup_systems.push(system);
         self
     }
 
-    pub fn set_resizeable(mut self) -> Self {
-        self.resizeable = true;
-        self
-    }
+    pub fn run(mut self) {
+        // for system in self.startup_systems {
+        //     system()
+        // }
 
-    pub fn set_fullscreen(mut self) -> Self {
-        self.fullscreen = true;
-        self
-    }
-
-    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
-        self.resources.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
-        self
-    }
-
-    pub fn add_tilemap(mut self, tilemap: TileMap) -> Self {
-        self.resources.tilemap = Some(Rc::new(RefCell::new(tilemap)));
-        self
-    }
-
-    pub fn add_layer() {}
-
-    pub fn run(mut self) -> MgiResult<()> {
-        if let Some(tm) = &self.resources.texture_manager {
-            tm.as_ref()
-                .borrow_mut()
-                .load_textures(&mut *self.renderer.rl(), &self.renderer.rt())?;
+        while self.game.is_running() {
+            self.game.handle_events(self.rl.borrow_mut());
         }
-
-        while self.game_obj.is_running() {
-            self.game_obj.handle_events(&self.renderer.rl());
-            self.game_obj.update()?;
-            self.game_obj.render(&mut self.renderer, &self.resources)?;
-        }
-
-        Ok(())
     }
 }
