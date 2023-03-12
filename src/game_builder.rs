@@ -32,6 +32,8 @@ impl ResourceManager {
 
 pub trait Drawable {
     fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) -> MgiResult<()>;
+    fn layer(&self) -> isize;
+    fn set_layer(&mut self, layer: isize);
 }
 
 pub trait Updateable {
@@ -104,6 +106,8 @@ impl<'g, T: Game> GameBuilder<'g, T> {
         self.resources.tilemap = Some(Rc::new(RefCell::new(tilemap)));
         self
     }
+
+    pub fn add_layer() {}
 
     pub fn run(mut self) -> MgiResult<()> {
         if let Some(tm) = &self.resources.texture_manager {

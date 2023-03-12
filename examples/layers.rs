@@ -8,11 +8,6 @@ struct MyGame {
 
 impl Drawable for MyGame {
     fn render(&mut self, _renderer: &Renderer, _resources: &ResourceManager) -> MgiResult<()> {
-        // renderer
-        //     .draw_texture_layers(resources.texture_manager().as_ref().unwrap())
-        //     .unwrap();
-        //
-
         Ok(())
     }
 }
@@ -49,6 +44,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut texture_manager = TextureManager::new();
     texture_manager.add_texture("bg", "examples/assets/bg.png");
     texture_manager.add_texture("person", "examples/assets/person.png");
+
+    let bg_layer = Layer::init(0).add_object("bg");
+    let person_layer = Layer::init(1).add_object("person");
 
     // let bg_layer: TextureLayer = Layer::default().add_obj(
     //     &"bg",

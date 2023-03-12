@@ -66,6 +66,7 @@ pub struct TileMap {
     tile_size: Vec2, // TODO: Add capability for varying tile sizes in the map
     tilesets: Vec<TileSet>,
     tile_idx_fn: TileIndexFunc,
+    layer: isize,
 }
 
 impl TileMap {
@@ -152,6 +153,14 @@ impl Drawable for TileMap {
 
         Ok(())
     }
+
+    fn layer(&self) -> isize {
+        self.layer
+    }
+
+    fn set_layer(&mut self, layer: isize) {
+        self.layer = layer;
+    }
 }
 
 pub struct TileMapRef<'t>(pub(crate) RefMut<'t, TileMap>);
@@ -163,5 +172,13 @@ impl<'t> Drawable for TileMapRef<'t> {
         resources: &ResourceManager,
     ) -> MgiResult<()> {
         self.0.render(renderer, resources)
+    }
+
+    fn layer(&self) -> isize {
+        self.0.layer()
+    }
+
+    fn set_layer(&mut self, layer: isize) {
+        self.0.set_layer(layer)
     }
 }

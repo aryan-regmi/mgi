@@ -1,16 +1,16 @@
-use std::{borrow::Borrow, cell::RefMut, collections::HashMap};
+use std::{borrow::Borrow, cell::RefMut};
 
 use raylib::{prelude::RaylibDrawHandle, RaylibHandle, RaylibThread};
 
 use crate::{
-    layers::Layer,
+    game_builder::Drawable,
     utils::{RenderContext, RenderThread},
 };
 
 pub struct Renderer<'l> {
     rl: RenderContext,
     rt: RenderThread,
-    layers: HashMap<usize, Vec<&'l dyn Layer>>,
+    pub(crate) layers: Vec<&'l dyn Drawable>,
 }
 
 impl<'l> Renderer<'l> {
@@ -18,7 +18,7 @@ impl<'l> Renderer<'l> {
         Self {
             rl,
             rt,
-            layers: HashMap::new(),
+            layers: Vec::new(),
         }
     }
 
@@ -37,7 +37,10 @@ impl<'l> Renderer<'l> {
         draw_fn(&mut d)
     }
 
-    pub fn layers(&self) -> &HashMap<usize, Vec<&'l dyn Layer>> {
-        &self.layers
+    pub fn draw_layers(&self) {
+        let mut rl = self.rl();
+        let mut d = rl.begin_drawing(self.rt());
+
+        // TODO: Draw all the layers
     }
 }

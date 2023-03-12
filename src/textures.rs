@@ -2,36 +2,15 @@ use std::{cell::Ref, collections::HashMap};
 
 use raylib::{texture::Texture2D, RaylibHandle, RaylibThread};
 
-use crate::layers::{Layer, LayerInfo};
-
 pub struct Texture {
     pub(crate) name: String,
     path: String,
     raw_texture: Option<Texture2D>,
-    layer_info: LayerInfo,
 }
 
 impl Texture {
     pub fn raw_texture(&self) -> Option<&Texture2D> {
         self.raw_texture.as_ref()
-    }
-}
-
-impl Layer for Texture {
-    fn set_layer(&mut self, layer: usize) {
-        self.layer_info.layer_id = layer;
-    }
-
-    fn set_visible(&mut self, visible: bool) {
-        self.layer_info.visible = visible;
-    }
-
-    fn tint(&self) -> raylib::prelude::Color {
-        self.layer_info.tint
-    }
-
-    fn set_tint(&mut self, tint: raylib::prelude::Color) {
-        self.layer_info.tint = tint;
     }
 }
 
@@ -51,7 +30,6 @@ impl TextureManager {
             name: name.into(),
             path: path.into(),
             raw_texture: None,
-            layer_info: LayerInfo::default(),
         });
     }
 
@@ -62,7 +40,6 @@ impl TextureManager {
                 name: name.into(),
                 path: path.into(),
                 raw_texture: None,
-                layer_info: LayerInfo::default(),
             });
         }
     }
