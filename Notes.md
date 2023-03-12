@@ -5,3 +5,5 @@
 
 
 # Create separte builders for all structs with `init` instead of `new`
+
+# Add documentation

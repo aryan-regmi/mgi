@@ -1,5 +1,4 @@
-use mgi::prelude::{Game, GameBuilder, Rect};
-use raylib::prelude::{Color, KeyboardKey};
+use mgi::prelude::{Color, Game, GameBuilder, KeyboardKey, Rect};
 
 struct MyGame {
     running: bool,
@@ -20,13 +19,13 @@ impl Game for MyGame {
         self.running
     }
 
-    fn update(&mut self, ctx: &mut mgi::prelude::MgiContext) {
+    fn update(&mut self, ctx: &mut mgi::prelude::Context) {
         if let Some(KeyboardKey::KEY_ESCAPE) = ctx.pressed_key() {
             self.running = false;
         }
     }
 
-    fn render(&mut self, ctx: &mut mgi::prelude::MgiContext) {
+    fn render(&mut self, ctx: &mut mgi::prelude::Context) {
         ctx.clear_background(Color::WHITE);
         ctx.draw_rect(Rect::new(0, 0, 20, 20, Color::RED), 1);
         ctx.fill_rect(Rect::new(0, 0, 20, 20, Color::BLUE), 0);
