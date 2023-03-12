@@ -8,9 +8,9 @@ struct MyGame {
 
 impl Drawable for MyGame {
     fn render(&mut self, renderer: &Renderer, resources: &ResourceManager) {
-        renderer
-            .draw_texture_layers(resources.texture_manager().as_ref().unwrap())
-            .unwrap();
+        // renderer
+        //     .draw_texture_layers(resources.texture_manager().as_ref().unwrap())
+        //     .unwrap();
     }
 }
 
@@ -45,20 +45,19 @@ fn main() -> Result<(), Box<dyn Error>> {
     texture_manager.add_texture("bg", "examples/assets/bg.png");
     texture_manager.add_texture("person", "examples/assets/person.png");
 
-    let bg_layer: TextureLayer = Layer::default().add_obj(
-        &"bg",
-        Some(Rectangle::new(600., 0., 800., 800.)),
-        Rectangle::new(0., 0., 800., 800.),
-        0.,
-    );
-    let player_layer: TextureLayer =
-        Layer::init(1).add_obj(&"person", None, Rectangle::new(180., 670., 60., 60.), 0.);
-
-    dbg!(bg_layer.id(), player_layer.id());
+    // let bg_layer: TextureLayer = Layer::default().add_obj(
+    //     &"bg",
+    //     Some(Rectangle::new(600., 0., 800., 800.)),
+    //     Rectangle::new(0., 0., 800., 800.),
+    //     0.,
+    // );
+    // let player_layer: TextureLayer =
+    //     Layer::init(1).add_obj(&"person", None, Rectangle::new(180., 670., 60., 60.), 0.);
+    //
+    // dbg!(bg_layer.id(), player_layer.id());
 
     GameBuilder::<MyGame>::init("Layers", (800, 800))
         .add_texture_manager(texture_manager)
-        .add_texture_layers(vec![bg_layer, player_layer])
         .run()?;
 
     Ok(())

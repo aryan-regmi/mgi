@@ -43,6 +43,7 @@ impl TileSet {
         self.tile_texture_names.push(texture);
     }
 
+    /// Returns the index of the tileset where the texture of `name` is stored.
     fn get_idx_from_name(&self, name: &str) -> Option<usize> {
         for (idx, tile_texture_name) in self.tile_texture_names.iter().enumerate() {
             if *tile_texture_name == name {
@@ -144,3 +145,9 @@ impl Drawable for TileMap {
 }
 
 pub struct TileMapRef<'t>(pub(crate) RefMut<'t, TileMap>);
+
+impl<'t> Drawable for TileMapRef<'t> {
+    fn render(&mut self, renderer: &crate::prelude::Renderer, resources: &ResourceManager) {
+        self.0.render(renderer, resources)
+    }
+}

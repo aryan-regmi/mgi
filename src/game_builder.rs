@@ -1,7 +1,4 @@
-use crate::{
-    layers::TextureLayer,
-    prelude::{TextureManagerRef, TileMap, TileMapRef},
-};
+use crate::prelude::{TextureManagerRef, TileMap, TileMapRef};
 use std::{cell::RefCell, error::Error, rc::Rc};
 
 use raylib::RaylibHandle;
@@ -98,24 +95,6 @@ impl<'g, T: Game> GameBuilder<'g, T> {
 
     pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
         self.resources.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
-        self
-    }
-
-    pub fn add_texture_layer(mut self, layer: TextureLayer<'g>) -> Self {
-        self.renderer.texture_layers.push(layer);
-        self
-    }
-
-    pub fn add_texture_layers(mut self, layers: Vec<TextureLayer<'g>>) -> Self {
-        for layer in layers {
-            self.renderer.texture_layers.push(layer);
-        }
-
-        // Sort layers by their IDs
-        self.renderer
-            .texture_layers
-            .sort_by(|a, b| a.id.partial_cmp(&b.id).unwrap());
-
         self
     }
 
