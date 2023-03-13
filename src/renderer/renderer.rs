@@ -1,8 +1,10 @@
+use crate::prelude::Vec2;
 use raylib::color::Color;
 use raylib::drawing::RaylibDrawHandle;
 
 pub trait Drawable {
-    fn draw(&mut self, pen: &mut RaylibDrawHandle);
+    fn draw(&mut self, pen: &mut RaylibDrawHandle, position: Vec2);
+    fn position(&self) -> Vec2;
 }
 
 pub(crate) struct Renderer {

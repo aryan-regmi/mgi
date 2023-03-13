@@ -19,15 +19,21 @@ pub trait Game {
 }
 
 // TODO: Create a resource manager and store texture_manager in there
-pub struct Context {
+pub struct Context<'tex> {
     pub(crate) pressed_key: Option<KeyboardKey>,
     pub(crate) renderer: Renderer,
-    pub(crate) texture_manager: Option<Rc<RefCell<TextureManager>>>,
+    pub(crate) texture_manager: Option<Rc<RefCell<TextureManager<'tex>>>>,
 }
 
-impl Context {
+impl<'tex> Context<'tex> {
     pub fn pressed_key(&self) -> Option<KeyboardKey> {
         self.pressed_key
+    }
+
+    pub fn texture_manager(&'tex self) -> Option<Rc<RefCell<TextureManager>>> {
+        if let Some(tm) = self.texture_manager {
+            Some(Rc::clone(&tm))
+        }
     }
 
     pub fn clear_background(&mut self, color: Color) {
@@ -44,22 +50,18 @@ impl Context {
         // Create new layer if the corresponding layer doesn't exist
         self.renderer.layers.push(vec![Box::new(drawable)])
     }
-
-    pub fn texture_manager(&self) -> Option<&Rc<RefCell<TextureManager>>> {
-        self.texture_manager.as_ref()
-    }
 }
 
 // TODO: Add a layer manager that can take named layers and convert to vector indices at the end!
-pub struct GameBuilder<T: Game> {
+pub struct GameBuilder<'tex, T: Game> {
     pub(crate) rl: RefCell<RaylibHandle>,
     pub(crate) rt: RaylibThread,
     startup_systems: Vec<fn()>,
     game: T,
-    texture_manager: Option<Rc<RefCell<TextureManager>>>,
+    texture_manager: Option<Rc<RefCell<TextureManager<'tex>>>>,
 }
 
-impl<T: Game> GameBuilder<T> {
+impl<'tex, T: Game> GameBuilder<'tex, T> {
     pub fn init(title: &str, size: (i32, i32)) -> Self {
         // TODO: Make this a parameter
         set_trace_log(TraceLogLevel::LOG_ERROR);
@@ -87,7 +89,7 @@ impl<T: Game> GameBuilder<T> {
     }
 
     // TODO: Make it so only one texture_manager can be added
-    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
+    pub fn add_texture_manager(mut self, texture_manager: TextureManager<'tex>) -> Self {
         self.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
         self
     }
@@ -96,13 +98,10 @@ impl<T: Game> GameBuilder<T> {
         if let Some(tm) = &mut self.texture_manager {
             let textures = &mut tm.borrow_mut().textures;
 
-            for (_, texture) in textures.iter_mut() {
-                let raw = self
-                    .rl
-                    .borrow_mut()
-                    .load_texture(&self.rt, &texture.borrow_mut().path)?;
+            for (_, mut texture) in textures.iter_mut() {
+                let raw = self.rl.borrow_mut().load_texture(&self.rt, texture.path)?;
 
-                texture.borrow_mut().raw = Some(raw);
+                texture.raw = Some(raw);
             }
         }
 
@@ -148,7 +147,7 @@ impl<T: Game> GameBuilder<T> {
 
             for layer in ctx.renderer.layers.iter_mut() {
                 for drawable in layer.iter_mut() {
-                    drawable.draw(&mut d, drawable.position());
+                    drawable.draw(&mut d);
                 }
             }
         }

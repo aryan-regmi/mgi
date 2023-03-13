@@ -1,6 +1,7 @@
 use mgi::{
     prelude::{Color, Game, GameBuilder, KeyboardKey, Rect},
     renderer::Text,
+    utils::MgiResult,
 };
 
 struct MyGame {
@@ -45,8 +46,10 @@ impl Game for MyGame {
     }
 }
 
-fn main() {
+fn main() -> MgiResult<()> {
     GameBuilder::<MyGame>::init("Hello World", (800, 800))
         .add_startup_system(MyGame::hello_world)
-        .run();
+        .run()?;
+
+    Ok(())
 }

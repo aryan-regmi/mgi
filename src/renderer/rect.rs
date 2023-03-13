@@ -1,9 +1,11 @@
 use crate::{game_builder::Context, renderer::Drawable, utils::Vec2};
 use raylib::{
     drawing::RaylibDrawHandle,
+    ffi::Rectangle,
     prelude::{Color, RaylibDraw},
 };
 
+#[derive(Debug)]
 pub struct Rect {
     position: Vec2,
     size: Vec2,
@@ -35,6 +37,28 @@ impl Rect {
     }
 }
 
+impl From<Rect> for Rectangle {
+    fn from(r: Rect) -> Self {
+        Self {
+            x: r.position.x as f32,
+            y: r.position.y as f32,
+            width: r.size.x as f32,
+            height: r.size.y as f32,
+        }
+    }
+}
+
+impl From<&Rect> for Rectangle {
+    fn from(r: &Rect) -> Self {
+        Self {
+            x: r.position.x as f32,
+            y: r.position.y as f32,
+            width: r.size.x as f32,
+            height: r.size.y as f32,
+        }
+    }
+}
+
 impl Context {
     pub fn fill_rect(&mut self, mut rect: Rect, layer: usize) {
         rect.fill = true;
@@ -43,24 +67,17 @@ impl Context {
 }
 
 impl Drawable for Rect {
-    fn draw(&mut self, pen: &mut RaylibDrawHandle) {
+    fn draw(&mut self, pen: &mut RaylibDrawHandle, position: Vec2) {
         if self.fill {
-            pen.draw_rectangle(
-                self.position.x,
-                self.position.y,
-                self.size.x,
-                self.size.y,
-                self.color,
-            );
-            return;
+            pen.draw_rectangle(position.x, position.y, self.size.x, self.size.y, self.color);
+        } else {
+            pen.draw_rectangle_lines(position.x, position.y, self.size.x, self.size.y, self.color);
         }
 
-        pen.draw_rectangle_lines(
-            self.position.x,
-            self.position.y,
-            self.size.x,
-            self.size.y,
-            self.color,
-        );
+        self.position = position;
+    }
+
+    fn position(&self) -> Vec2 {
+        self.position.clone()
     }
 }
