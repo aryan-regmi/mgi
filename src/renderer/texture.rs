@@ -19,9 +19,24 @@ pub struct Texture {
     pub(crate) position: Vec2,
 }
 
+impl Texture {
+    pub fn set_tint(&mut self, tint: Color) {
+        self.tint = tint;
+    }
+
+    pub fn set_size(&mut self, width: i32, height: i32) {
+        self.size = (width, height).into();
+    }
+}
+
 impl Drawable for Rc<RefCell<Texture>> {
     fn draw(&mut self, pen: &mut raylib::prelude::RaylibDrawHandle, position: Vec2) {
-        // FIX: Need to check that `raw` is set before calling this
+        if self.borrow_mut().raw.is_none() {
+            panic!(
+                "The texture defined in `{}` was not loaded properly by the TextureManager",
+                self.borrow().path
+            );
+        }
 
         let dest = Rectangle::new(
             position.x as f32,

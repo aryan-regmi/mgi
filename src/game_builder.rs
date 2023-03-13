@@ -86,10 +86,13 @@ impl<T: Game> GameBuilder<T> {
         self
     }
 
-    // TODO: Make it so only one texture_manager can be added
-    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
+    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> MgiResult<Self> {
+        if self.texture_manager.is_some() {
+            return Err(format!("Only one texture manager can be added to a game").into());
+        }
+
         self.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
-        self
+        Ok(self)
     }
 
     fn load_textures(&mut self) -> MgiResult<()> {
