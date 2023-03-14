@@ -1,4 +1,7 @@
-use crate::{prelude::Context, renderer::Renderer, Color, Size};
+use crate::{
+    prelude::{renderer::Renderer, Context},
+    Color, Size,
+};
 use pixels::{Pixels, SurfaceTexture};
 use std::{cell::RefCell, error::Error, rc::Rc};
 use winit::{
@@ -17,6 +20,8 @@ pub trait Game: 'static {
     fn update(&mut self, ctx: &Context);
 }
 
+// TODO: Add resource manager w/ texture manager & layer manager
+// TODO: Add layer manager that allows named OR numbered layers
 pub struct GameBuilder<'g, T: Game> {
     title: &'g str,
     size: Size,

@@ -1,13 +1,12 @@
-pub(crate) mod renderer;
-
 pub mod context;
+pub mod drawable;
 pub mod game_builder;
-pub mod rect;
 
 pub mod prelude {
     pub use crate::context::*;
+    pub use crate::drawable::*;
     pub use crate::game_builder::*;
-    pub use crate::rect::*;
+    pub use crate::{Color, Point, Size};
 
     pub use winit::event::VirtualKeyCode as Keycode;
 }
@@ -33,6 +32,12 @@ pub struct Point {
     pub y: i32,
 }
 
+impl Point {
+    pub fn new(x: i32, y: i32) -> Self {
+        Self { x, y }
+    }
+}
+
 impl From<(i32, i32)> for Point {
     fn from(v: (i32, i32)) -> Self {
         Self { x: v.0, y: v.1 }
@@ -47,7 +52,7 @@ impl Into<(i32, i32)> for Point {
 
 pub type PixelBuffer<'b> = &'b mut [u8];
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Color {
     raw: [u8; 4],
 }
