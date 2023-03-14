@@ -7,7 +7,7 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     prelude::MgiResult,
-    renderer::{Drawable, Renderer},
+    render_types::{Drawable, Renderer},
     texture_manager::TextureManager,
 };
 
@@ -151,7 +151,7 @@ impl<T: Game> GameBuilder<T> {
 
             for layer in ctx.renderer.layers.iter_mut() {
                 for drawable in layer.iter_mut() {
-                    drawable.draw(&mut d, drawable.position());
+                    drawable.draw(&mut d);
                 }
             }
         }

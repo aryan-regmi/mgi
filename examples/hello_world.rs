@@ -1,8 +1,4 @@
-use mgi::{
-    prelude::{Color, Game, GameBuilder, KeyboardKey, Rect},
-    renderer::Text,
-    utils::MgiResult,
-};
+use mgi::prelude::*;
 
 struct MyGame {
     running: bool,
@@ -31,8 +27,16 @@ impl Game for MyGame {
 
     fn render(&mut self, ctx: &mut mgi::prelude::Context) {
         ctx.clear_background(Color::GRAY);
-        ctx.draw(Rect::from_center(400, 400, 400, 400, Color::RED), 1);
-        ctx.fill_rect(Rect::new(200, 200, 400, 400, Color::BLUE), 0);
+
+        let mut r1 = Rect::from_center(400, 400, 400, 400, Color::RED);
+        r1.rotate(Rotation::Degrees(45.));
+        ctx.draw(r1, 1);
+
+        let mut r2 = Rect::new(200, 200, 400, 400, Color::BLUE);
+        r2.rotate(Rotation::Degrees(45.));
+        r2.translate(400, 120);
+        ctx.fill_rect(r2, 0);
+
         let txt = "HELLO  WORLD";
         ctx.draw(
             Text::new(

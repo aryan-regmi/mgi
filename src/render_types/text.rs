@@ -24,19 +24,13 @@ impl Text {
 }
 
 impl Drawable for Text {
-    fn draw(&mut self, pen: &mut raylib::prelude::RaylibDrawHandle, position: Vec2) {
+    fn draw(&mut self, pen: &mut raylib::prelude::RaylibDrawHandle) {
         pen.draw_text(
             &self.text,
-            position.x,
-            position.y,
+            self.position.x,
+            self.position.y,
             self.font_size,
             self.color,
         );
-
-        self.position = position;
-    }
-
-    fn position(&self) -> Vec2 {
-        self.position.clone()
     }
 }

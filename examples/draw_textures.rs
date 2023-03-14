@@ -2,6 +2,7 @@ use std::rc::Rc;
 
 use mgi::{
     prelude::{Color, Game, GameBuilder, KeyboardKey},
+    render_types::{Rect, Rotation, Shape},
     texture_manager::TextureManager,
     utils::MgiResult,
 };
@@ -35,19 +36,41 @@ impl Game for MyGame {
         ctx.draw(texture, 0);
 
         let texture = texture_manager.get_texture("person").unwrap();
-        texture.borrow_mut().set_size(128, 128);
+        let mut dest = Rect::new(400 - 64, 400 - 64, 128, 128, Color::WHITE);
+        dest.rotate(Rotation::Degrees(45.));
+        dest.translate(
+            400 - 64 * (45f32.to_radians().cos() as i32),
+            400 + 64 * (45),
+        );
+        texture.borrow_mut().set_dest(dest);
+        ctx.draw(texture, 1);
+
+        let texture = texture_manager.get_texture("person2").unwrap();
+        let dest = Rect::new(400 - 64, 400 - 64, 128, 128, Color::WHITE);
+        texture.borrow_mut().set_dest(dest);
         ctx.draw(texture, 1);
     }
 }
 
 fn main() -> MgiResult<()> {
     let texture_manager = TextureManager::init()
-        .add_texture("bg", "examples/assets/bg.png", (800, 800).into(), None)
+        .add_texture(
+            "bg",
+            "examples/assets/bg.png",
+            None,
+            Rect::new(0, 0, 800, 800, Color::WHITE),
+        )
         .add_texture(
             "person",
             "examples/assets/person.png",
-            (32, 32).into(),
             None,
+            Rect::new(0, 0, 32, 32, Color::WHITE),
+        )
+        .add_texture(
+            "person2",
+            "examples/assets/person.png",
+            None,
+            Rect::new(0, 0, 32, 32, Color::WHITE),
         );
 
     GameBuilder::<MyGame>::init("Textures", (800, 800))
