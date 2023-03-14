@@ -1,4 +1,4 @@
-use sdl2::pixels::Color;
+use sdl2::{pixels::Color, rect::Point};
 
 use crate::prelude::*;
 
@@ -40,21 +40,40 @@ impl Rect {
 
 impl Drawable for Rect {
     fn draw(&mut self, ctx: &Context) -> MgiResult<()> {
-        let (x, y): (i32, i32) = self.position.into();
-
         let canvas = ctx.canvas();
 
+        // Set color of rectangle
         canvas.borrow_mut().set_draw_color(self.color);
+
         // TODO: Set rotation too!
         if self.fill {
-            canvas
-                .borrow_mut()
-                .fill_rect(sdl2::rect::Rect::new(x, y, self.width, self.height))?;
+            let xmin = self.position.x;
+            let xmax = self.position.x + self.width as i32;
+            let ymin = self.position.y;
+            let ymax = self.position.y + self.height as i32;
+
+            let mut points: Vec<Point> = Vec::new();
+            for x in xmin..xmax {
+                for y in ymin..ymax {
+                    points.push((x, y).into());
+                }
+            }
+
+            canvas.borrow_mut().draw_points(points.as_slice())?;
         } else {
-            canvas
-                .borrow_mut()
-                .draw_rect(sdl2::rect::Rect::new(x, y, self.width, self.height))?;
+            let tl = Point::new(self.position.x, self.position.y);
+            let tr = Point::new(self.position.x + self.width as i32, self.position.y);
+            let bl = Point::new(self.position.x, self.position.y + self.height as i32);
+            let br = Point::new(
+                self.position.x + self.width as i32,
+                self.position.y + self.height as i32,
+            );
+            let points = vec![tl, bl, br, tr, tl];
+
+            canvas.borrow_mut().draw_lines(points.as_slice())?;
         }
+
+        // Reset to clear color
         canvas.borrow_mut().set_draw_color(ctx.clear_color);
 
         Ok(())

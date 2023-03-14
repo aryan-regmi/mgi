@@ -19,8 +19,6 @@ pub struct Context {
     size: Vec2,
     pub(crate) clear_color: Color,
     key_down: Vec<Keycode>,
-
-    // TODO: Make this own the Renderer
     renderer: Renderer,
 }
 
