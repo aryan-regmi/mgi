@@ -1,16 +1,18 @@
-use mgi::prelude::*;
+use std::error::Error;
 
-struct MyGame {
+use mgi::{Game, GameBuilder};
+use winit::event::VirtualKeyCode;
+
+const WIDTH: u32 = 800;
+const HEIGHT: u32 = 800;
+const WHITE: [u8; 4] = [255, 255, 255, 255];
+const RED: [u8; 4] = [255, 0, 0, 255];
+
+struct World {
     running: bool,
 }
 
-impl MyGame {
-    fn hello_world() {
-        println!("HELLO_WORLD!");
-    }
-}
-
-impl Game for MyGame {
+impl Game for World {
     fn init() -> Self {
         Self { running: true }
     }
@@ -19,41 +21,37 @@ impl Game for MyGame {
         self.running
     }
 
-    fn update(&mut self, ctx: &mut mgi::prelude::Context) {
-        if let Some(KeyboardKey::KEY_ESCAPE) = ctx.pressed_key() {
-            self.running = false;
+    fn stop(&mut self) {
+        self.running = false;
+    }
+
+    fn draw(&mut self, frame: &mut [u8]) {
+        for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
+            // Draw a box
+            let x = (i % WIDTH as usize) as i32;
+            let y = (i / WIDTH as usize) as i32;
+
+            let color;
+            if x >= 200 && x <= 600 && y >= 200 && y <= 600 {
+                color = RED;
+            } else {
+                color = WHITE;
+            }
+
+            pixel.copy_from_slice(&color);
         }
     }
 
-    fn render(&mut self, ctx: &mut mgi::prelude::Context) {
-        ctx.clear_background(Color::GRAY);
-
-        let mut r1 = Rect::from_center(400, 400, 400, 400, Color::RED);
-        r1.rotate(Rotation::Degrees(45.));
-        ctx.draw(r1, 1);
-
-        let mut r2 = Rect::new(200, 200, 400, 400, Color::BLUE);
-        r2.rotate(Rotation::Degrees(45.));
-        r2.translate(400, 120);
-        ctx.fill_rect(r2, 0);
-
-        let txt = "HELLO  WORLD";
-        ctx.draw(
-            Text::new(
-                txt,
-                (300 + (2.5 * txt.len() as f32) as i32, 400).into(),
-                Color::YELLOW,
-                20,
-            ),
-            2,
-        );
+    fn update(&mut self, inputs: &winit_input_helper::WinitInputHelper) {
+        if inputs.key_pressed(VirtualKeyCode::Escape) {
+            self.stop();
+        }
     }
 }
 
-fn main() -> MgiResult<()> {
-    GameBuilder::<MyGame>::init("Hello World", (800, 800))
-        .add_startup_system(MyGame::hello_world)
-        .run()?;
+fn main() -> Result<(), Box<dyn Error>> {
+    GameBuilder::<World>::init("Hello World", (WIDTH as i32, HEIGHT as i32)).run()?;
 
     Ok(())
 }
+
