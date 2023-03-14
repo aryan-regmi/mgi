@@ -1,17 +1,21 @@
-use std::error::Error;
+pub(crate) mod renderer;
 
-use pixels::{wgpu::Color, Pixels, SurfaceTexture};
-use winit::{
-    dpi::PhysicalSize,
-    event::Event,
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
-};
-use winit_input_helper::WinitInputHelper;
+pub mod context;
+pub mod game_builder;
+pub mod rect;
 
-struct Size {
-    width: i32,
-    height: i32,
+pub mod prelude {
+    pub use crate::context::*;
+    pub use crate::game_builder::*;
+    pub use crate::rect::*;
+
+    pub use winit::event::VirtualKeyCode as Keycode;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Size {
+    pub width: i32,
+    pub height: i32,
 }
 
 impl From<(i32, i32)> for Size {
@@ -23,83 +27,82 @@ impl From<(i32, i32)> for Size {
     }
 }
 
-pub trait Game: 'static {
-    fn init() -> Self;
-    fn is_running(&self) -> bool;
-    fn stop(&mut self);
-    fn draw(&mut self, frame: &mut [u8]);
-    fn update(&mut self, inputs: &WinitInputHelper);
+#[derive(Debug, Clone, Copy)]
+pub struct Point {
+    pub x: i32,
+    pub y: i32,
 }
 
-pub struct GameBuilder<'g, T: Game> {
-    title: &'g str,
-    size: Size,
-    game: T,
+impl From<(i32, i32)> for Point {
+    fn from(v: (i32, i32)) -> Self {
+        Self { x: v.0, y: v.1 }
+    }
 }
 
-impl<'g, T: Game> GameBuilder<'g, T> {
-    pub fn init(title: &'g str, size: (i32, i32)) -> Self {
+impl Into<(i32, i32)> for Point {
+    fn into(self) -> (i32, i32) {
+        (self.x, self.y)
+    }
+}
+
+pub type PixelBuffer<'b> = &'b mut [u8];
+
+#[derive(Debug)]
+pub struct Color {
+    raw: [u8; 4],
+}
+
+impl Color {
+    pub const BLACK: Color = Color {
+        raw: [0, 0, 0, 255],
+    };
+    pub const WHITE: Color = Color {
+        raw: [255, 255, 255, 255],
+    };
+    pub const RED: Color = Color {
+        raw: [255, 0, 0, 255],
+    };
+    pub const GREEN: Color = Color {
+        raw: [0, 255, 0, 255],
+    };
+    pub const BLUE: Color = Color {
+        raw: [0, 0, 255, 255],
+    };
+
+    pub fn rgba(red: u8, green: u8, blue: u8, alpha: f32) -> Self {
         Self {
-            title,
-            size: size.into(),
-            game: T::init(),
+            raw: [red, green, blue, (alpha * 255.) as u8],
         }
     }
 
-    pub fn run(mut self) -> Result<(), Box<dyn Error>> {
-        let event_loop = EventLoop::new();
-        let mut input = WinitInputHelper::new();
-        let window = {
-            let size = PhysicalSize::new(self.size.width, self.size.height);
-            WindowBuilder::new()
-                .with_title(self.title)
-                .with_inner_size(size)
-                .with_max_inner_size(size)
-                .with_min_inner_size(size)
-                .build(&event_loop)?
-        };
+    pub fn red(&self) -> u8 {
+        self.raw[0]
+    }
 
-        let mut pixels = {
-            let window_size = window.inner_size();
-            let surface_texture =
-                SurfaceTexture::new(window_size.width, window_size.height, &window);
-            Pixels::new(
-                self.size.width as u32,
-                self.size.height as u32,
-                surface_texture,
-            )?
-        };
-        pixels.set_clear_color(Color::WHITE);
+    pub fn green(&self) -> u8 {
+        self.raw[1]
+    }
 
-        event_loop.run(move |event, _, control_flow| {
-            if !self.game.is_running() {
-                *control_flow = ControlFlow::Exit;
-                self.game.stop();
-                return;
-            }
+    pub fn blue(&self) -> u8 {
+        self.raw[2]
+    }
 
-            // Draw the current frame
-            if let Event::RedrawRequested(_) = event {
-                self.game.draw(pixels.get_frame_mut());
+    pub fn alpha(&self) -> f32 {
+        self.raw[3] as f32 / 255.
+    }
 
-                if let Err(_) = pixels.render() {
-                    *control_flow = ControlFlow::Exit;
-                    return;
-                }
-            }
+    pub fn raw(&self) -> &[u8] {
+        &self.raw
+    }
+}
 
-            // Handle input
-            if input.update(&event) {
-                if input.close_requested() {
-                    *control_flow = ControlFlow::Exit;
-                    self.game.stop();
-                    return;
-                }
-
-                self.game.update(&input);
-            }
-
-            window.request_redraw();
-        });
+impl Into<pixels::wgpu::Color> for Color {
+    fn into(self) -> pixels::wgpu::Color {
+        pixels::wgpu::Color {
+            r: self.red() as f64,
+            g: self.green() as f64,
+            b: self.blue() as f64,
+            a: self.alpha() as f64,
+        }
     }
 }

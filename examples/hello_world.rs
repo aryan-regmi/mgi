@@ -1,12 +1,9 @@
 use std::error::Error;
 
-use mgi::{Game, GameBuilder};
-use winit::event::VirtualKeyCode;
+use mgi::{prelude::*, Color};
 
 const WIDTH: u32 = 800;
 const HEIGHT: u32 = 800;
-const WHITE: [u8; 4] = [255, 255, 255, 255];
-const RED: [u8; 4] = [255, 0, 0, 255];
 
 struct World {
     running: bool,
@@ -25,25 +22,26 @@ impl Game for World {
         self.running = false;
     }
 
-    fn draw(&mut self, frame: &mut [u8]) {
-        for (i, pixel) in frame.chunks_exact_mut(4).enumerate() {
-            // Draw a box
-            let x = (i % WIDTH as usize) as i32;
-            let y = (i / WIDTH as usize) as i32;
+    fn draw(&mut self, ctx: &Context) {
+        ctx.clear_background(Color::WHITE);
 
-            let color;
-            if x >= 200 && x <= 600 && y >= 200 && y <= 600 {
-                color = RED;
-            } else {
-                color = WHITE;
-            }
+        ctx.draw(Rect::new(100, 100, (400, 400).into(), Color::RED), 1);
+        ctx.draw(Rect::new(200, 200, (400, 400).into(), Color::GREEN), 2);
+        ctx.draw(Rect::new(300, 300, (400, 400).into(), Color::BLUE), 3);
 
-            pixel.copy_from_slice(&color);
-        }
+        ctx.draw(
+            Rect::new(
+                -100,
+                -100,
+                (400, 400).into(),
+                Color::rgba(255, 200, 150, 1.0),
+            ),
+            0,
+        );
     }
 
-    fn update(&mut self, inputs: &winit_input_helper::WinitInputHelper) {
-        if inputs.key_pressed(VirtualKeyCode::Escape) {
+    fn update(&mut self, ctx: &Context) {
+        if ctx.key_pressed(Keycode::Escape) {
             self.stop();
         }
     }
@@ -54,4 +52,3 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
