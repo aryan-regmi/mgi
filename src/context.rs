@@ -68,6 +68,7 @@ impl Context {
         self.layers().push(vec![Box::new(drawable)]);
     }
 
+    // TODO: Implement rotation!
     pub fn draw_rect_outline(&self, rect: Rect, layer: usize) {
         let (h, w) = (rect.size.width, rect.size.height);
 

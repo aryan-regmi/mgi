@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 pub mod context;
 pub mod drawable;
 pub mod game_builder;
@@ -26,6 +28,12 @@ impl From<(i32, i32)> for Size {
     }
 }
 
+impl Into<(i32, i32)> for Size {
+    fn into(self) -> (i32, i32) {
+        (self.width, self.height)
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Point {
     pub x: i32,
@@ -50,7 +58,27 @@ impl Into<(i32, i32)> for Point {
     }
 }
 
-pub type PixelBuffer<'b> = &'b mut [u8];
+#[derive(Debug, Clone, Copy)]
+pub enum Rotation {
+    Radians(f32),
+    Degrees(f32),
+}
+
+impl Rotation {
+    pub fn to_radians(&self) -> f32 {
+        match self {
+            Rotation::Radians(r) => *r,
+            Rotation::Degrees(d) => d * (PI / 180.),
+        }
+    }
+
+    pub fn to_degrees(&self) -> f32 {
+        match self {
+            Rotation::Radians(r) => r * (180. / PI),
+            Rotation::Degrees(d) => *d,
+        }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Color {
