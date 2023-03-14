@@ -1,83 +1,88 @@
-use raylib::{
-    prelude::{Color, KeyboardKey, RaylibDraw, TraceLogLevel},
-    set_trace_log, RaylibHandle, RaylibThread,
+use crate::{drawable::Drawable, renderer::Renderer};
+use std::{cell::RefCell, rc::Rc, time::Duration};
+
+use sdl2::{
+    event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window, Sdl,
+    VideoSubsystem,
 };
 
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    prelude::MgiResult,
-    render_types::{Drawable, Renderer},
-    texture_manager::TextureManager,
-};
+use crate::{prelude::MgiResult, utils::Vec2};
 
 pub trait Game {
     fn init() -> Self;
     fn is_running(&self) -> bool;
-    fn update(&mut self, ctx: &mut Context);
-    fn render(&mut self, ctx: &mut Context);
+    fn update(&mut self, ctx: &mut Context) -> MgiResult<()>;
+    fn render(&mut self, ctx: &mut Context) -> MgiResult<()>;
 }
 
-// TODO: Create a resource manager and store texture_manager in there
 pub struct Context {
-    pub(crate) pressed_key: Option<KeyboardKey>,
-    pub(crate) renderer: Renderer,
-    pub(crate) texture_manager: Option<Rc<RefCell<TextureManager>>>,
+    size: Vec2,
+    pub(crate) clear_color: Color,
+    key_down: Vec<Keycode>,
+
+    // TODO: Make this own the Renderer
+    renderer: Renderer,
 }
 
 impl Context {
-    pub fn pressed_key(&self) -> Option<KeyboardKey> {
-        self.pressed_key
+    pub fn size(&self) -> Vec2 {
+        self.size
     }
 
-    pub fn clear_background(&mut self, color: Color) {
-        self.renderer.clear_color = color;
+    pub fn is_keydown(&self, key: Keycode) -> bool {
+        self.key_down.contains(&key)
+    }
+
+    pub(crate) fn canvas(&self) -> Rc<RefCell<Canvas<Window>>> {
+        Rc::clone(&self.renderer.canvas)
+    }
+
+    pub(crate) fn layers(&self) -> Rc<RefCell<Vec<Vec<Box<dyn Drawable>>>>> {
+        Rc::clone(&self.renderer.layers)
     }
 
     pub fn draw<T: Drawable + 'static>(&mut self, drawable: T, layer: usize) {
-        // If the layer already exists, just add to it
-        if self.renderer.layers.len() > layer {
-            self.renderer.layers[layer].push(Box::new(drawable));
-            return;
+        let layers = self.layers();
+
+        if layers.borrow_mut().len() > layer {
+            layers.borrow_mut()[layer].push(Box::new(drawable));
+        } else {
+            layers.borrow_mut().push(vec![Box::new(drawable)])
         }
-
-        // Create new layer if the corresponding layer doesn't exist
-        self.renderer.layers.push(vec![Box::new(drawable)])
-    }
-
-    pub fn texture_manager(&self) -> Option<&Rc<RefCell<TextureManager>>> {
-        self.texture_manager.as_ref()
     }
 }
 
-// TODO: Add a layer manager that can take named layers and convert to vector indices at the end!
 pub struct GameBuilder<T: Game> {
-    pub(crate) rl: RefCell<RaylibHandle>,
-    pub(crate) rt: RaylibThread,
+    title: String,
+    size: Vec2,
+
+    sdl_ctx: Sdl,
+    video_sys: VideoSubsystem,
+
     startup_systems: Vec<fn()>,
     game: T,
-    texture_manager: Option<Rc<RefCell<TextureManager>>>,
 }
 
 impl<T: Game> GameBuilder<T> {
-    pub fn init(title: &str, size: (i32, i32)) -> Self {
-        // TODO: Make this a parameter
-        set_trace_log(TraceLogLevel::LOG_ERROR);
+    pub fn init(title: &str, size: (u32, u32)) -> MgiResult<Self> {
+        let sdl_ctx = sdl2::init()?;
+        let video_sys = sdl_ctx.video()?;
 
-        let (mut rl, rt) = raylib::init().size(size.0, size.1).title(title).build();
-        rl.set_exit_key(None); // So <Esc> doesn't quit by default
-
-        Self {
-            rl: RefCell::new(rl),
-            rt,
+        Ok(Self {
+            title: title.into(),
+            size: size.into(),
+            sdl_ctx,
+            video_sys,
             startup_systems: Vec::new(),
             game: T::init(),
-            texture_manager: None,
-        }
+        })
     }
 
     pub fn fullscreen(self) -> Self {
-        self.rl.borrow_mut().toggle_fullscreen();
+        self
+    }
+
+    pub fn resizeable(self) -> Self {
         self
     }
 
@@ -86,74 +91,78 @@ impl<T: Game> GameBuilder<T> {
         self
     }
 
-    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> MgiResult<Self> {
-        if self.texture_manager.is_some() {
-            return Err(format!("Only one texture manager can be added to a game").into());
-        }
-
-        self.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
-        Ok(self)
-    }
-
-    fn load_textures(&mut self) -> MgiResult<()> {
-        if let Some(tm) = &mut self.texture_manager {
-            let textures = &mut tm.borrow_mut().textures;
-
-            for (_, texture) in textures.iter_mut() {
-                let raw = self
-                    .rl
-                    .borrow_mut()
-                    .load_texture(&self.rt, &texture.borrow_mut().path)?;
-
-                texture.borrow_mut().raw = Some(raw);
-            }
-        }
-
-        Ok(())
-    }
-
     pub fn run(mut self) -> MgiResult<()> {
-        self.load_textures()?;
+        // Create window
+        let window = self
+            .video_sys
+            .window(&self.title, self.size.x as u32, self.size.y as u32)
+            .position_centered()
+            .opengl()
+            .build()
+            .map_err(|e| e.to_string())?;
+        let canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
 
         // Run startup systems
         for system in self.startup_systems {
             system()
         }
 
-        let (mut rl, rt) = (self.rl.borrow_mut(), &self.rt);
-
-        let texture_manager = if let Some(tm) = self.texture_manager {
-            Some(Rc::clone(&tm))
-        } else {
-            None
-        };
         let mut ctx = Context {
-            pressed_key: None,
+            size: self.size,
+            clear_color: Color::WHITE,
+            key_down: Vec::new(),
             renderer: Renderer {
-                clear_color: Color::WHITE,
-                layers: Vec::new(),
+                canvas: Rc::new(RefCell::new(canvas)),
+                layers: Rc::new(RefCell::new(Vec::new())),
             },
-            texture_manager,
         };
 
-        while self.game.is_running() {
-            ctx.pressed_key = rl.get_key_pressed();
+        // let canvas = &mut ctx.renderer.canvas;
+        // let texture_creator = canvas.texture_creator();
+        // let texture = texture_creator.load_texture("examples/assets/bg.png")?;
 
-            self.game.update(&mut ctx);
+        ctx.canvas().borrow_mut().set_draw_color(ctx.clear_color);
+        ctx.canvas().borrow_mut().clear();
+        ctx.canvas().borrow_mut().present();
+        let mut event_pump = self.sdl_ctx.event_pump()?;
+        'gameloop: while self.game.is_running() {
+            // Handle events
+            for event in event_pump.poll_iter() {
+                match event {
+                    Event::Quit { timestamp: _ } => {
+                        break 'gameloop;
+                    }
+
+                    Event::KeyDown { keycode, .. } => {
+                        if let Some(key) = keycode {
+                            ctx.key_down.push(key);
+                        }
+                    }
+
+                    _ => {}
+                }
+            }
+
+            self.game.update(&mut ctx)?;
 
             // The render function doesnt actually render: it just determines the layers to render
             // stuff in, their textures, and their, displayed positions
-            self.game.render(&mut ctx);
+            self.game.render(&mut ctx)?;
 
-            // Actually loop through renderer's layers and display stuff
-            let mut d = rl.begin_drawing(rt);
-            d.clear_background(ctx.renderer.clear_color);
-
-            for layer in ctx.renderer.layers.iter_mut() {
+            for layer in ctx.layers().borrow_mut().iter_mut() {
                 for drawable in layer.iter_mut() {
-                    drawable.draw(&mut d);
+                    drawable.draw(&ctx)?;
                 }
             }
+
+            // // canvas.copy(&texture, None, None)?;
+            // canvas.set_draw_color(Color::RED);
+            // canvas.fill_rect(Rect::new(0, 0, 200, 200))?;
+            // canvas.set_draw_color(Color::WHITE);
+
+            ctx.canvas().borrow_mut().present();
+            ctx.key_down = vec![]; // Reset keys pressed
+            std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60)); // 60fps
         }
 
         Ok(())

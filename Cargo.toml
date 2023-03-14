@@ -7,4 +7,4 @@ edition = "2021"
 rand = "0.8.5"
 
 [dependencies]
-raylib = "3.7.0"
+sdl2 = { version = "0.35.2", features = ["ttf", "image"] }
