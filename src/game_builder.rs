@@ -115,10 +115,6 @@ impl<T: Game> GameBuilder<T> {
             },
         };
 
-        // let canvas = &mut ctx.renderer.canvas;
-        // let texture_creator = canvas.texture_creator();
-        // let texture = texture_creator.load_texture("examples/assets/bg.png")?;
-
         ctx.canvas().borrow_mut().set_draw_color(ctx.clear_color);
         ctx.canvas().borrow_mut().clear();
         ctx.canvas().borrow_mut().present();

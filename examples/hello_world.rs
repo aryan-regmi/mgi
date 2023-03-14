@@ -29,14 +29,20 @@ impl Game for MyGame {
     }
 
     fn render(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
-        let (w, h) = (400, 400);
+        let (w, h) = (800, 800);
 
         let pos = (300, 200).into();
         let rect = Rect::new(pos, w as u32, h as u32, Color::BLUE, None);
         ctx.draw(rect, 1);
 
         let pos = (ctx.size().x / 2 - w / 2, ctx.size().y / 2 - h / 2).into();
-        let mut rect = Rect::new(pos, w as u32, h as u32, Color::RED, None);
+        let mut rect = Rect::new(
+            pos,
+            w as u32,
+            h as u32,
+            Color::RED,
+            Some(Rotation::Degrees(45.)),
+        );
         rect.fill();
         ctx.draw(rect, 0);
 

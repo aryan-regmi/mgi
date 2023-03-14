@@ -38,6 +38,21 @@ impl Rect {
     }
 }
 
+fn rotate_points(points: Vec<Point>, angle: &Rotation, center: Point) -> Vec<Point> {
+    let mut rotated_points = Vec::with_capacity(points.len());
+    for point in points {
+        let theta = angle.to_radians();
+        let (x, y) = ((center.x - point.x) as f32, (center.y - point.y) as f32);
+
+        let rx = x * theta.cos() - y * theta.sin();
+        let ry = x * theta.sin() + y * theta.cos();
+
+        rotated_points.push((center.x + rx as i32, center.y + ry as i32).into());
+    }
+
+    rotated_points
+}
+
 impl Drawable for Rect {
     fn draw(&mut self, ctx: &Context) -> MgiResult<()> {
         let canvas = ctx.canvas();
@@ -59,6 +74,15 @@ impl Drawable for Rect {
                 }
             }
 
+            if let Some(rot) = &self.rotation {
+                let center = (
+                    self.position.x + self.width as i32 / 2,
+                    self.position.y + self.height as i32 / 2,
+                )
+                    .into();
+                points = rotate_points(points, rot, center);
+            }
+
             canvas.borrow_mut().draw_points(points.as_slice())?;
         } else {
             let tl = Point::new(self.position.x, self.position.y);
@@ -68,7 +92,16 @@ impl Drawable for Rect {
                 self.position.x + self.width as i32,
                 self.position.y + self.height as i32,
             );
-            let points = vec![tl, bl, br, tr, tl];
+            let mut points = vec![tl, bl, br, tr, tl];
+
+            if let Some(rot) = &self.rotation {
+                let center = (
+                    self.position.x + self.width as i32 / 2,
+                    self.position.y + self.height as i32 / 2,
+                )
+                    .into();
+                points = rotate_points(points, rot, center);
+            }
 
             canvas.borrow_mut().draw_lines(points.as_slice())?;
         }
