@@ -28,6 +28,29 @@ impl Rect {
         }
     }
 
+    pub fn from_center(
+        cx: i32,
+        cy: i32,
+        size: Size,
+        color: Color,
+        rotation: Option<Rotation>,
+    ) -> Self {
+        let rotation = if let Some(rot) = rotation {
+            rot
+        } else {
+            Rotation::Radians(0.)
+        };
+
+        let (x, y) = (cx - size.width / 2, cy - size.height / 2);
+
+        Self {
+            position: (x, y).into(),
+            size,
+            color,
+            rotation,
+        }
+    }
+
     pub fn center(&self) -> Point {
         let (x, y) = self.position.into();
         let (w, h) = self.size.into();

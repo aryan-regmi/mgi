@@ -27,9 +27,9 @@ impl Game for World {
 
         ctx.draw(Rect::new(100, 100, (400, 400).into(), Color::RED, None), 1);
         ctx.draw(
-            Rect::new(
-                200,
-                200,
+            Rect::from_center(
+                400,
+                400,
                 (400, 400).into(),
                 Color::GREEN,
                 Some(Rotation::Degrees(45.)),
@@ -49,7 +49,7 @@ impl Game for World {
         );
 
         ctx.draw_rect_outline(
-            Rect::new(100, 200, (600, 400).into(), Color::BLACK, None),
+            Rect::from_center(400, 400, (600, 400).into(), Color::BLACK, None),
             4,
         );
     }

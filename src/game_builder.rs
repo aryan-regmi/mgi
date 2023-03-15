@@ -82,7 +82,6 @@ impl<'g, T: Game> GameBuilder<'g, T> {
             if let Event::RedrawRequested(_) = event {
                 self.game.draw(&mut ctx);
 
-                // TODO: Loop through all layers and draw them
                 for layer in ctx.layers().iter_mut() {
                     for drawable in layer.iter_mut() {
                         drawable.draw(&ctx);

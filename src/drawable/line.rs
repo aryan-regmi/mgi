@@ -34,14 +34,15 @@ impl Drawable for LineSegment {
         let mut err2;
 
         loop {
-            // Set pixel
-            ctx.set_pixel(x0, y0, self.color.raw());
-            // img.get_pixel_mut(x0 as u32, y0 as u32).data = [255, 255, 255];
-
             // Check end condition
             if x0 == x1 && y0 == y1 {
                 break;
             };
+
+            // TODO: Dont wrap around screen
+
+            // Set pixel
+            ctx.set_pixel(x0, y0, self.color.raw());
 
             // Store old error
             err2 = 2 * err;
