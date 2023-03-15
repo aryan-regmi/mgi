@@ -39,8 +39,6 @@ impl Drawable for LineSegment {
                 break;
             };
 
-            // TODO: Dont wrap around screen
-
             // Set pixel
             ctx.set_pixel(x0, y0, self.color.raw());
 

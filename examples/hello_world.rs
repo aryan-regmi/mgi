@@ -49,7 +49,7 @@ impl Game for World {
         );
 
         ctx.draw_rect_outline(
-            Rect::from_center(400, 400, (600, 400).into(), Color::BLACK, None),
+            Rect::from_center(000, 800, (600, 400).into(), Color::BLACK, None),
             4,
         );
     }

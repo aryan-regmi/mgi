@@ -32,6 +32,11 @@ impl Context {
     }
 
     pub(crate) fn set_pixel(&self, x: i32, y: i32, color: &[u8]) {
+        // Don't wrap around screen
+        if x > self.size.width || x < 0 || y > self.size.height || y < 0 {
+            return;
+        }
+
         let idx = 4 * (x * self.size.height + y) as usize;
 
         let frame = &mut self.pixels.borrow_mut();

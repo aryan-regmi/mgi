@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{error::Error, f32::consts::PI};
 
 pub mod context;
 pub mod drawable;
@@ -8,10 +8,12 @@ pub mod prelude {
     pub use crate::context::*;
     pub use crate::drawable::*;
     pub use crate::game_builder::*;
-    pub use crate::{Color, Point, Size};
+    pub use crate::{Color, MgiResult, Point, Size};
 
     pub use winit::event::VirtualKeyCode as Keycode;
 }
+
+pub type MgiResult<T> = Result<T, Box<dyn Error>>;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Size {
