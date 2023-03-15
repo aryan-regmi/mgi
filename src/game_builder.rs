@@ -1,5 +1,5 @@
 use crate::{
-    prelude::{renderer::Renderer, Context},
+    prelude::{renderer::Renderer, Context, TextureManager},
     Color, Size,
 };
 use pixels::{Pixels, SurfaceTexture};
@@ -26,6 +26,7 @@ pub struct GameBuilder<'g, T: Game> {
     title: &'g str,
     size: Size,
     game: T,
+    texture_manager: Option<Rc<RefCell<TextureManager>>>,
 }
 
 impl<'g, T: Game> GameBuilder<'g, T> {
@@ -34,7 +35,13 @@ impl<'g, T: Game> GameBuilder<'g, T> {
             title,
             size: size.into(),
             game: T::init(),
+            texture_manager: None,
         }
+    }
+
+    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
+        self.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
+        self
     }
 
     pub fn run(mut self) -> Result<(), Box<dyn Error>> {
@@ -62,6 +69,15 @@ impl<'g, T: Game> GameBuilder<'g, T> {
         };
         pixels.set_clear_color(Color::WHITE.into());
 
+        // TODO: Load all textures
+        let texture_manager = if let Some(tm) = self.texture_manager {
+            tm.borrow_mut().load_textures()?;
+
+            Some(Rc::clone(&tm))
+        } else {
+            None
+        };
+
         let mut ctx = Context {
             size: self.size,
             renderer: Renderer {
@@ -69,6 +85,7 @@ impl<'g, T: Game> GameBuilder<'g, T> {
             },
             pixels: Rc::new(RefCell::new(pixels)),
             inputs: Rc::new(RefCell::new(input)),
+            texture_manager,
         };
 
         event_loop.run(move |event, _, control_flow| {

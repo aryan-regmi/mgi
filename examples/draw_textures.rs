@@ -24,6 +24,8 @@ impl Game for World {
 
     fn draw(&mut self, ctx: &Context) {
         ctx.clear_background(Color::WHITE);
+
+        ctx.draw_texture("bg", 0).unwrap();
     }
 
     fn update(&mut self, ctx: &Context) {
@@ -34,7 +36,12 @@ impl Game for World {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    GameBuilder::<World>::init("Hello World", (WIDTH as i32, HEIGHT as i32)).run()?;
+    let mut texture_manager = TextureManager::new();
+    texture_manager.add_texture("bg", "examples/assets/bg.png");
+
+    GameBuilder::<World>::init("Hello World", (WIDTH as i32, HEIGHT as i32))
+        .add_texture_manager(texture_manager)
+        .run()?;
 
     Ok(())
 }

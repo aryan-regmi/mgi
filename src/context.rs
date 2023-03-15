@@ -10,9 +10,9 @@ use winit_input_helper::WinitInputHelper;
 use crate::{
     prelude::{
         renderer::{Drawable, Renderer},
-        LineSegment, Rect,
+        LineSegment, Rect, TextureManager,
     },
-    Color, Point, Size,
+    Color, MgiResult, Point, Size,
 };
 
 pub struct Context {
@@ -20,6 +20,7 @@ pub struct Context {
     pub(crate) renderer: Renderer,
     pub(crate) pixels: Rc<RefCell<Pixels>>,
     pub(crate) inputs: Rc<RefCell<WinitInputHelper>>,
+    pub(crate) texture_manager: Option<Rc<RefCell<TextureManager>>>,
 }
 
 impl Context {
@@ -71,6 +72,17 @@ impl Context {
 
         // Create new layer if necessary
         self.layers().push(vec![Box::new(drawable)]);
+    }
+
+    pub fn draw_texture(&self, texture_name: &str, layer: usize) -> MgiResult<()> {
+        // Grab correct texture from texture_manager
+        let texture_manager = self.texture_manager.as_ref().unwrap();
+        let texture_manager = texture_manager.borrow_mut();
+        let texture = Rc::clone(&texture_manager.textures[texture_name]);
+
+        self.draw(texture, layer);
+
+        Ok(())
     }
 
     // TODO: Implement rotation!
