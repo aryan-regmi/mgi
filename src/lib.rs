@@ -46,6 +46,18 @@ impl Point {
     pub fn new(x: i32, y: i32) -> Self {
         Self { x, y }
     }
+
+    pub fn clamp(mut self, xmax: i32, ymax: i32) -> Self {
+        if self.x > xmax {
+            self.x = xmax;
+        }
+
+        if self.y > ymax {
+            self.y = ymax;
+        }
+
+        self
+    }
 }
 
 impl From<(i32, i32)> for Point {

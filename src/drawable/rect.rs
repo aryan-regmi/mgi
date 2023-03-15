@@ -3,7 +3,7 @@ use crate::{
     Color, Point, Rotation, Size,
 };
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Rect {
     pub(crate) position: Point,
     pub(crate) size: Size,
@@ -59,6 +59,10 @@ impl Rect {
     }
 
     pub(crate) fn rotate_point(point: Point, rot: Rotation, center: Point) -> Point {
+        if rot.to_radians() == 0. {
+            return point;
+        }
+
         let (cx, cy) = (center.x as f32, center.y as f32);
         let (x, y) = (cx - point.x as f32, cy - point.y as f32); // Offset by the center
         let theta = rot.to_radians();

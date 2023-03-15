@@ -74,12 +74,20 @@ impl Context {
         self.layers().push(vec![Box::new(drawable)]);
     }
 
-    pub fn draw_texture(&self, texture_name: &str, layer: usize) -> MgiResult<()> {
+    pub fn draw_texture(
+        &self,
+        texture_name: &str,
+        src: Option<Rect>,
+        dest: Option<Rect>,
+        layer: usize,
+    ) -> MgiResult<()> {
         // Grab correct texture from texture_manager
         let texture_manager = self.texture_manager.as_ref().unwrap();
         let texture_manager = texture_manager.borrow_mut();
         let texture = Rc::clone(&texture_manager.textures[texture_name]);
 
+        texture.borrow_mut().src = src;
+        texture.borrow_mut().dest = dest;
         self.draw(texture, layer);
 
         Ok(())
