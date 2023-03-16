@@ -20,7 +20,7 @@ pub(crate) struct Texture {
     pub(crate) rotation: Rotation,
 }
 
-pub(crate) struct TextureManager {
+pub struct TextureManager {
     pub(crate) textures: Vec<Texture>,
 
     // Used to create the texture
@@ -28,11 +28,22 @@ pub(crate) struct TextureManager {
 }
 
 impl TextureManager {
-    pub(crate) fn new() -> Self {
+    pub fn new() -> Self {
         Self {
             textures: Vec::new(),
             texture_creator: None,
         }
+    }
+
+    pub fn add_texture(&mut self, name: &str, path: &str) {
+        self.textures.push(Texture {
+            name: name.into(),
+            path: path.into(),
+            raw: None,
+            src: None,
+            dest: None,
+            rotation: Rotation::Radians(0.0),
+        });
     }
 
     pub(crate) fn load_textures(&mut self) -> MgiResult<()> {

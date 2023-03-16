@@ -1,6 +1,5 @@
 use crate::context::{Context, Renderer};
-use crate::prelude::Rotation;
-use crate::texture_manager::{Texture, TextureManager};
+use crate::texture_manager::TextureManager;
 use crate::{prelude::MgiResult, utils::Vec2};
 use sdl2::{event::Event, pixels::Color, Sdl, VideoSubsystem};
 use std::{cell::RefCell, rc::Rc, time::Duration};
@@ -20,7 +19,7 @@ pub struct GameBuilder<T: Game> {
     video_sys: VideoSubsystem,
 
     startup_systems: Vec<fn()>,
-    texture_manager: Rc<RefCell<TextureManager>>,
+    texture_manager: Option<Rc<RefCell<TextureManager>>>,
     game: T,
 }
 
@@ -35,7 +34,7 @@ impl<T: Game> GameBuilder<T> {
             sdl_ctx,
             video_sys,
             startup_systems: Vec::new(),
-            texture_manager: Rc::new(RefCell::new(TextureManager::new())),
+            texture_manager: None,
             game: T::init(),
         })
     }
@@ -53,15 +52,8 @@ impl<T: Game> GameBuilder<T> {
         self
     }
 
-    pub fn add_texture(self, name: &str, path: &str) -> Self {
-        self.texture_manager.borrow_mut().textures.push(Texture {
-            name: name.into(),
-            path: path.into(),
-            raw: None,
-            src: None,
-            dest: None,
-            rotation: Rotation::Radians(0.0),
-        });
+    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
+        self.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
         self
     }
 
@@ -81,6 +73,12 @@ impl<T: Game> GameBuilder<T> {
             system()
         }
 
+        let texture_manager = if let Some(tm) = &self.texture_manager {
+            Some(Rc::clone(tm))
+        } else {
+            None
+        };
+
         let mut ctx = Context {
             size: self.size,
             clear_color: Color::WHITE,
@@ -89,13 +87,14 @@ impl<T: Game> GameBuilder<T> {
                 canvas: Rc::new(RefCell::new(canvas)),
                 layers: Rc::new(RefCell::new(Vec::new())),
             },
-            texture_manager: Rc::clone(&self.texture_manager),
+            texture_manager,
         };
 
         // Load textures
-        self.texture_manager.borrow_mut().texture_creator =
-            Some(ctx.canvas().borrow().texture_creator());
-        self.texture_manager.borrow_mut().load_textures()?;
+        if let Some(tm) = &self.texture_manager {
+            tm.borrow_mut().texture_creator = Some(ctx.canvas().borrow().texture_creator());
+            tm.borrow_mut().load_textures()?;
+        }
 
         ctx.canvas().borrow_mut().set_draw_color(ctx.clear_color);
         ctx.canvas().borrow_mut().clear();

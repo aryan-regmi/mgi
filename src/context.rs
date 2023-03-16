@@ -20,7 +20,7 @@ pub struct Context {
     pub(crate) clear_color: Color,
     pub(crate) key_down: Vec<Keycode>,
     pub(crate) renderer: Renderer,
-    pub(crate) texture_manager: Rc<RefCell<TextureManager>>,
+    pub(crate) texture_manager: Option<Rc<RefCell<TextureManager>>>,
 }
 
 impl Context {
@@ -60,7 +60,7 @@ impl Context {
         layer: usize,
     ) -> MgiResult<()> {
         // NOTE: The texture must be set before hand!
-        let mut texture_manager = self.texture_manager.borrow_mut();
+        let mut texture_manager = self.texture_manager.as_ref().unwrap().borrow_mut();
         let texture = texture_manager.get_texture_mut(texture_name);
 
         if let Some(texture) = texture {
