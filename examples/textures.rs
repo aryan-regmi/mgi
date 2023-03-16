@@ -4,12 +4,6 @@ struct MyGame {
     running: bool,
 }
 
-impl MyGame {
-    fn hello_world() {
-        println!("HELLO_WORLD!");
-    }
-}
-
 impl Game for MyGame {
     fn init() -> Self {
         Self { running: true }
@@ -28,24 +22,21 @@ impl Game for MyGame {
     }
 
     fn render(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
-        let (w, h) = (400, 400);
-
-        let pos = (300, 200).into();
-        let mut rect = Rectangle::new(pos, w as u32, h as u32, Color::BLUE);
-        rect.fill(false);
-        ctx.draw(rect, 1);
-
-        let pos = (ctx.size().x / 2 - w / 2, ctx.size().y / 2 - h / 2).into();
-        let rect = Rectangle::new(pos, w as u32, h as u32, Color::RED);
-        ctx.draw(rect, 0);
+        ctx.draw_texture(
+            "bg",
+            None,
+            Some(Rectangle::new((100, 100).into(), 600, 600, Color::WHITE)),
+            Some(Rotation::Degrees(180.)),
+            0,
+        )?;
 
         Ok(())
     }
 }
 
 fn main() -> MgiResult<()> {
-    GameBuilder::<MyGame>::init("Hello World", (800, 800))?
-        .add_startup_system(MyGame::hello_world)
+    GameBuilder::<MyGame>::init("Textures", (800, 800))?
+        .add_texture("bg", "examples/assets/bg.png")
         .run()?;
 
     Ok(())

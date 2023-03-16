@@ -6,7 +6,7 @@ pub trait Drawable {
     fn draw(&mut self, ctx: &Context) -> MgiResult<()>;
 }
 
-pub struct Rect {
+pub struct Rectangle {
     position: Vec2,
     width: u32,
     height: u32,
@@ -14,7 +14,7 @@ pub struct Rect {
     fill: bool,
 }
 
-impl Rect {
+impl Rectangle {
     pub fn new(position: Vec2, width: u32, height: u32, color: Color) -> Self {
         Self {
             position,
@@ -30,7 +30,7 @@ impl Rect {
     }
 }
 
-impl Drawable for Rect {
+impl Drawable for Rectangle {
     fn draw(&mut self, ctx: &Context) -> MgiResult<()> {
         let canvas = ctx.canvas();
 
@@ -55,6 +55,57 @@ impl Drawable for Rect {
 
         // Reset to clear color
         canvas.borrow_mut().set_draw_color(ctx.clear_color);
+
+        Ok(())
+    }
+}
+
+impl From<&Rectangle> for sdl2::rect::Rect {
+    fn from(r: &Rectangle) -> Self {
+        sdl2::rect::Rect::new(r.position.x, r.position.y, r.width, r.height)
+    }
+}
+
+impl Drawable for Texture {
+    fn draw(&mut self, ctx: &Context) -> MgiResult<()> {
+        let canvas = ctx.canvas();
+
+        if self.raw.is_none() {
+            return Err(format!(
+                "The associated raw texture was not loaded successfully for `{}`",
+                self.name
+            )
+            .into());
+        }
+
+        // Get raw texture
+        let raw = self.raw.as_ref().unwrap();
+
+        // Get source if it exists
+        let src = if let Some(src) = &self.src {
+            let src: sdl2::rect::Rect = src.into();
+            Some(src)
+        } else {
+            None
+        };
+
+        // Get destination if it exists
+        let dest = if let Some(src) = &self.dest {
+            let src: sdl2::rect::Rect = src.into();
+            Some(src)
+        } else {
+            None
+        };
+
+        canvas.borrow_mut().copy_ex(
+            raw,
+            src,
+            dest,
+            self.rotation.to_degrees() as f64,
+            None,
+            false,
+            false,
+        )?;
 
         Ok(())
     }

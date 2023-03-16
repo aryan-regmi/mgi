@@ -1,12 +1,19 @@
-use crate::{drawable::Drawable, renderer::Renderer};
-use std::{cell::RefCell, rc::Rc, time::Duration};
-
-use sdl2::{
-    event::Event, keyboard::Keycode, pixels::Color, render::Canvas, video::Window, Sdl,
-    VideoSubsystem,
+use crate::{
+    drawable::{Drawable, Rectangle},
+    prelude::Rotation,
+    renderer::Renderer,
 };
-
 use crate::{prelude::MgiResult, utils::Vec2};
+use sdl2::{
+    event::Event,
+    image::LoadTexture,
+    keyboard::Keycode,
+    pixels::Color,
+    render::{Canvas, Texture as TextureRaw, TextureCreator},
+    video::{Window, WindowContext},
+    Sdl, VideoSubsystem,
+};
+use std::{cell::RefCell, rc::Rc, time::Duration};
 
 pub trait Game {
     fn init() -> Self;
@@ -20,6 +27,7 @@ pub struct Context {
     pub(crate) clear_color: Color,
     key_down: Vec<Keycode>,
     renderer: Renderer,
+    texture_manager: Rc<RefCell<TextureManager>>,
 }
 
 impl Context {
@@ -48,6 +56,106 @@ impl Context {
             layers.borrow_mut().push(vec![Box::new(drawable)])
         }
     }
+
+    // TODO: Add rotation
+    pub fn draw_texture(
+        &mut self,
+        texture_name: &str,
+        src: Option<Rectangle>,
+        dest: Option<Rectangle>,
+        rotation: Option<Rotation>,
+        layer: usize,
+    ) -> MgiResult<()> {
+        // NOTE: The texture must be set before hand!
+        let mut texture_manager = self.texture_manager.borrow_mut();
+        let texture = texture_manager.get_texture_mut(texture_name);
+
+        if let Some(texture) = texture {
+            let layers = self.layers();
+
+            let raw = if let Some(r) = &texture.raw {
+                Some(Rc::clone(r))
+            } else {
+                None
+            };
+
+            let rotation = if let Some(rot) = rotation {
+                rot
+            } else {
+                Rotation::Radians(0.0)
+            };
+
+            if layers.borrow_mut().len() > layer {
+                layers.borrow_mut()[layer].push(Box::new(Texture {
+                    name: texture.name.to_owned(),
+                    path: texture.path.to_owned(),
+                    raw,
+                    src,
+                    rotation,
+                    dest,
+                }));
+            } else {
+                layers.borrow_mut().push(vec![Box::new(Texture {
+                    name: texture.name.to_owned(),
+                    path: texture.path.to_owned(),
+                    raw,
+                    src,
+                    dest,
+                    rotation,
+                })])
+            }
+        }
+
+        Ok(())
+    }
+}
+
+pub(crate) struct Texture {
+    pub(crate) name: String,
+    path: String,
+    pub(crate) raw: Option<Rc<TextureRaw>>,
+    pub(crate) src: Option<Rectangle>,
+    pub(crate) dest: Option<Rectangle>,
+    pub(crate) rotation: Rotation,
+}
+
+struct TextureManager {
+    textures: Vec<Texture>,
+
+    // Used to create the texture
+    texture_creator: Option<TextureCreator<WindowContext>>,
+}
+
+impl TextureManager {
+    fn new() -> Self {
+        Self {
+            textures: Vec::new(),
+            texture_creator: None,
+        }
+    }
+
+    fn load_textures(&mut self) -> MgiResult<()> {
+        for texture in self.textures.iter_mut() {
+            texture.raw = Some(Rc::new(
+                self.texture_creator
+                    .as_ref()
+                    .unwrap()
+                    .load_texture(&texture.path)?,
+            ));
+        }
+
+        Ok(())
+    }
+
+    fn get_texture_mut(&mut self, name: &str) -> Option<&mut Texture> {
+        for texture in &mut self.textures {
+            if texture.name == name {
+                return Some(texture);
+            }
+        }
+
+        None
+    }
 }
 
 pub struct GameBuilder<T: Game> {
@@ -58,6 +166,7 @@ pub struct GameBuilder<T: Game> {
     video_sys: VideoSubsystem,
 
     startup_systems: Vec<fn()>,
+    texture_manager: Rc<RefCell<TextureManager>>,
     game: T,
 }
 
@@ -72,6 +181,7 @@ impl<T: Game> GameBuilder<T> {
             sdl_ctx,
             video_sys,
             startup_systems: Vec::new(),
+            texture_manager: Rc::new(RefCell::new(TextureManager::new())),
             game: T::init(),
         })
     }
@@ -86,6 +196,18 @@ impl<T: Game> GameBuilder<T> {
 
     pub fn add_startup_system(mut self, system: fn()) -> Self {
         self.startup_systems.push(system);
+        self
+    }
+
+    pub fn add_texture(self, name: &str, path: &str) -> Self {
+        self.texture_manager.borrow_mut().textures.push(Texture {
+            name: name.into(),
+            path: path.into(),
+            raw: None,
+            src: None,
+            dest: None,
+            rotation: Rotation::Radians(0.0),
+        });
         self
     }
 
@@ -113,7 +235,13 @@ impl<T: Game> GameBuilder<T> {
                 canvas: Rc::new(RefCell::new(canvas)),
                 layers: Rc::new(RefCell::new(Vec::new())),
             },
+            texture_manager: Rc::clone(&self.texture_manager),
         };
+
+        // Load textures
+        self.texture_manager.borrow_mut().texture_creator =
+            Some(ctx.canvas().borrow().texture_creator());
+        self.texture_manager.borrow_mut().load_textures()?;
 
         ctx.canvas().borrow_mut().set_draw_color(ctx.clear_color);
         ctx.canvas().borrow_mut().clear();

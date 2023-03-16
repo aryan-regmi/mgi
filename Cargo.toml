@@ -7,4 +7,4 @@ edition = "2021"
 rand = "0.8.5"
 
 [dependencies]
-sdl2 = { version = "0.35.2", features = ["ttf", "image"] }
+sdl2 = { version = "0.35.2", features = ["ttf", "image", "unsafe_textures"] }
