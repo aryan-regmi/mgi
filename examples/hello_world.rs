@@ -32,12 +32,12 @@ impl Game for MyGame {
         let (w, h) = (400, 400);
 
         let pos = (300, 200).into();
-        let rect = Rect::new(pos, w as u32, h as u32, Color::BLUE);
+        let mut rect = Rect::new(pos, w as u32, h as u32, Color::BLUE);
+        rect.fill(false);
         ctx.draw(rect, 1);
 
         let pos = (ctx.size().x / 2 - w / 2, ctx.size().y / 2 - h / 2).into();
-        let mut rect = Rect::new(pos, w as u32, h as u32, Color::RED);
-        rect.fill();
+        let rect = Rect::new(pos, w as u32, h as u32, Color::RED);
         ctx.draw(rect, 0);
 
         Ok(())

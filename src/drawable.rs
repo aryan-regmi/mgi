@@ -21,12 +21,12 @@ impl Rect {
             width,
             height,
             color,
-            fill: false,
+            fill: true,
         }
     }
 
-    pub fn fill(&mut self) {
-        self.fill = true;
+    pub fn fill(&mut self, val: bool) {
+        self.fill = val;
     }
 }
 
