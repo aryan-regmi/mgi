@@ -1,6 +1,6 @@
 use sdl2::pixels::Color;
 
-use crate::prelude::*;
+use crate::{prelude::*, texture_manager::Texture};
 
 pub trait Drawable {
     fn draw(&mut self, ctx: &Context) -> MgiResult<()>;
