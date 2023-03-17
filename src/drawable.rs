@@ -6,10 +6,11 @@ pub trait Drawable {
     fn draw(&mut self, ctx: &Context) -> MgiResult<()>;
 }
 
+#[derive(Clone)]
 pub struct Rectangle {
-    position: Vec2,
-    width: u32,
-    height: u32,
+    pub(crate) position: Vec2,
+    pub(crate) width: u32,
+    pub(crate) height: u32,
     color: Color,
     fill: bool,
 }

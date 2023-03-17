@@ -2,6 +2,7 @@ use std::{error::Error, f32::consts::PI};
 
 pub type MgiResult<T> = Result<T, Box<dyn Error>>;
 
+#[derive(Clone, Copy)]
 pub enum Rotation {
     Degrees(f32),
     Radians(f32),

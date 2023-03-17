@@ -1,4 +1,6 @@
 use crate::context::{Context, Renderer};
+use crate::prelude::TileMap;
+use crate::resource_manager::ResourceManager;
 use crate::texture_manager::TextureManager;
 use crate::{prelude::MgiResult, utils::Vec2};
 use sdl2::{event::Event, pixels::Color, Sdl, VideoSubsystem};
@@ -19,7 +21,7 @@ pub struct GameBuilder<T: Game> {
     video_sys: VideoSubsystem,
 
     startup_systems: Vec<fn()>,
-    texture_manager: Option<Rc<RefCell<TextureManager>>>,
+    resource_manager: ResourceManager,
     game: T,
 }
 
@@ -34,7 +36,7 @@ impl<T: Game> GameBuilder<T> {
             sdl_ctx,
             video_sys,
             startup_systems: Vec::new(),
-            texture_manager: None,
+            resource_manager: ResourceManager::new(None, None),
             game: T::init(),
         })
     }
@@ -53,7 +55,26 @@ impl<T: Game> GameBuilder<T> {
     }
 
     pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
-        self.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
+        self.resource_manager.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
+        self
+    }
+
+    /// The ID of the TileMap is its index in the  tilemap vector
+    pub fn add_tilemap(mut self, mut tilemap: TileMap) -> Self {
+        // Initalize tilemap_manager if it doesn't exist
+        if let None = self.resource_manager.tilemap_manager {
+            self.resource_manager.tilemap_manager = Some(Rc::new(RefCell::new(Vec::new())));
+        }
+
+        let tilemap_manager = self.resource_manager.tilemap_manager.as_ref().unwrap();
+
+        // Set tilemap ID
+        let tilemap_id = tilemap_manager.borrow().len();
+        tilemap.id = tilemap_id;
+
+        // Add tilemap to tilemap_manager
+        tilemap_manager.borrow_mut().push(tilemap);
+
         self
     }
 
@@ -73,12 +94,6 @@ impl<T: Game> GameBuilder<T> {
             system()
         }
 
-        let texture_manager = if let Some(tm) = &self.texture_manager {
-            Some(Rc::clone(tm))
-        } else {
-            None
-        };
-
         let mut ctx = Context {
             size: self.size,
             clear_color: Color::WHITE,
@@ -87,13 +102,20 @@ impl<T: Game> GameBuilder<T> {
                 canvas: Rc::new(RefCell::new(canvas)),
                 layers: Rc::new(RefCell::new(Vec::new())),
             },
-            texture_manager,
+            resource_manager: self.resource_manager.clone(),
         };
 
         // Load textures
-        if let Some(tm) = &self.texture_manager {
+        if let Some(tm) = &self.resource_manager.texture_manager {
             tm.borrow_mut().texture_creator = Some(ctx.canvas().borrow().texture_creator());
             tm.borrow_mut().load_textures()?;
+        }
+
+        // Generate all tilemaps
+        if let Some(tm) = &self.resource_manager.tilemap_manager {
+            for tilemap in tm.borrow_mut().iter_mut() {
+                tilemap.generate();
+            }
         }
 
         ctx.canvas().borrow_mut().set_draw_color(ctx.clear_color);

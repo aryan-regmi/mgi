@@ -1,12 +1,13 @@
 use crate::prelude::MgiResult;
 use crate::prelude::Rectangle;
 use crate::prelude::Rotation;
+use crate::resource_manager::ResourceManager;
 use crate::texture_manager::Texture;
 use std::{cell::RefCell, rc::Rc};
 
 use sdl2::{keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
 
-use crate::{drawable::Drawable, prelude::Vec2, texture_manager::TextureManager};
+use crate::{drawable::Drawable, prelude::Vec2};
 
 pub(crate) struct Renderer {
     pub(crate) canvas: Rc<RefCell<Canvas<Window>>>,
@@ -20,7 +21,7 @@ pub struct Context {
     pub(crate) clear_color: Color,
     pub(crate) key_down: Vec<Keycode>,
     pub(crate) renderer: Renderer,
-    pub(crate) texture_manager: Option<Rc<RefCell<TextureManager>>>,
+    pub(crate) resource_manager: ResourceManager,
 }
 
 impl Context {
@@ -60,7 +61,12 @@ impl Context {
         layer: usize,
     ) -> MgiResult<()> {
         // NOTE: The texture must be set before hand!
-        let mut texture_manager = self.texture_manager.as_ref().unwrap().borrow_mut();
+        let mut texture_manager = self
+            .resource_manager
+            .texture_manager
+            .as_ref()
+            .unwrap()
+            .borrow_mut();
         let texture = texture_manager.get_texture_mut(texture_name);
 
         if let Some(texture) = texture {
@@ -100,5 +106,48 @@ impl Context {
         }
 
         Ok(())
+    }
+
+    // TODO: Make tilemaps hold ids
+    pub fn draw_tilemap(&mut self, tilemap_id: usize, layer: usize) {
+        // TODO: Proper error handling
+        let tilemap_manager = self.resource_manager.tilemap_manager.as_ref().unwrap();
+        let texture_manager = self.resource_manager.texture_manager.as_ref().unwrap();
+        let tilemap = &tilemap_manager.borrow()[tilemap_id];
+
+        for tile in &tilemap.tiles {
+            // NOTE: The texture must be set before hand!
+            let texture_name = tilemap.get_texture_name(tile.texture_idx);
+
+            if let Some(texture) = texture_manager.borrow_mut().get_texture_mut(texture_name) {
+                let layers = self.layers();
+
+                let raw = if let Some(r) = &texture.raw {
+                    Some(Rc::clone(r))
+                } else {
+                    None
+                };
+
+                if layers.borrow_mut().len() > layer {
+                    layers.borrow_mut()[layer].push(Box::new(Texture {
+                        name: texture.name.to_owned(),
+                        path: texture.path.to_owned(),
+                        raw,
+                        src: None,
+                        dest: Some(tile.rect.clone()),
+                        rotation: tile.rotation,
+                    }));
+                } else {
+                    layers.borrow_mut().push(vec![Box::new(Texture {
+                        name: texture.name.to_owned(),
+                        path: texture.path.to_owned(),
+                        raw,
+                        src: None,
+                        dest: Some(tile.rect.clone()),
+                        rotation: tile.rotation,
+                    })])
+                }
+            }
+        }
     }
 }
