@@ -50,8 +50,7 @@ impl Context {
         }
     }
 
-    // TODO: Add simpler function with less params for ease of use
-    pub fn draw_texture(
+    pub fn draw_texture_pro(
         &mut self,
         texture_name: &str,
         src: Option<Rectangle>,
@@ -107,6 +106,56 @@ impl Context {
                     path: texture.path.to_owned(),
                     raw,
                     src,
+                    dest,
+                    rotation,
+                })])
+            }
+        }
+
+        Ok(())
+    }
+
+    pub fn draw_texture(
+        &mut self,
+        texture_name: &str,
+        dest: Option<Rectangle>,
+        layer: usize,
+    ) -> MgiResult<()> {
+        // NOTE: The texture must be set before hand!
+        let mut texture_manager = self
+            .resource_manager
+            .texture_manager
+            .as_ref()
+            .unwrap()
+            .borrow_mut();
+        let texture = texture_manager.get_texture_mut(texture_name);
+
+        if let Some(texture) = texture {
+            let layers = self.layers();
+
+            let raw = if let Some(r) = &texture.raw {
+                Some(Rc::clone(r))
+            } else {
+                None
+            };
+
+            let rotation = Rotation::Radians(0.0);
+
+            if layers.borrow_mut().len() > layer {
+                layers.borrow_mut()[layer].push(Box::new(Texture {
+                    name: texture.name.to_owned(),
+                    path: texture.path.to_owned(),
+                    raw,
+                    src: None,
+                    dest,
+                    rotation,
+                }));
+            } else {
+                layers.borrow_mut().push(vec![Box::new(Texture {
+                    name: texture.name.to_owned(),
+                    path: texture.path.to_owned(),
+                    raw,
+                    src: None,
                     dest,
                     rotation,
                 })])

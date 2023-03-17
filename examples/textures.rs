@@ -22,16 +22,19 @@ impl Game for MyGame {
     }
 
     fn render(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
-        ctx.draw_texture("bg", None, None, None, None, None, 0)?;
+        const BACKGROUND: usize = 0;
+        const PERSON: usize = BACKGROUND + 1;
 
-        ctx.draw_texture(
+        ctx.draw_texture("bg", None, BACKGROUND)?;
+
+        ctx.draw_texture_pro(
             "person",
             None,
             Some(Rectangle::new((400, 520).into(), 128, 128, Color::WHITE)),
             Some(Rotation::Degrees(30.)),
             None,
             None,
-            1,
+            PERSON,
         )?;
 
         Ok(())

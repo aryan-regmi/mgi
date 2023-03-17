@@ -28,16 +28,19 @@ impl Game for MyGame {
     }
 
     fn render(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
+        const BACKGROUND: usize = 0;
+        const FOREGROUND: usize = 1;
+
         let (w, h) = (400, 400);
 
         let pos = (300, 200).into();
         let mut rect = Rectangle::new(pos, w as u32, h as u32, Color::BLUE);
         rect.fill(false);
-        ctx.draw(rect, 1);
+        ctx.draw(rect, FOREGROUND);
 
         let pos = (ctx.size().x / 2 - w / 2, ctx.size().y / 2 - h / 2).into();
         let rect = Rectangle::new(pos, w as u32, h as u32, Color::RED);
-        ctx.draw(rect, 0);
+        ctx.draw(rect, BACKGROUND);
 
         Ok(())
     }
