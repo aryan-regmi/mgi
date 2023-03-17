@@ -108,7 +108,7 @@ impl Context {
         Ok(())
     }
 
-    // TODO: Make tilemaps hold ids
+    // TODO: Choose position to place the tilemap too! (add offset to tile.rect)
     pub fn draw_tilemap(&mut self, tilemap_id: usize, layer: usize) {
         // TODO: Proper error handling
         let tilemap_manager = self.resource_manager.tilemap_manager.as_ref().unwrap();

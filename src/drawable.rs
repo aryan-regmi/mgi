@@ -1,6 +1,6 @@
 use sdl2::pixels::Color;
 
-use crate::{prelude::*, texture_manager::Texture};
+use crate::prelude::*;
 
 pub trait Drawable {
     fn draw(&mut self, ctx: &Context) -> MgiResult<()>;
@@ -64,50 +64,5 @@ impl Drawable for Rectangle {
 impl From<&Rectangle> for sdl2::rect::Rect {
     fn from(r: &Rectangle) -> Self {
         sdl2::rect::Rect::new(r.position.x, r.position.y, r.width, r.height)
-    }
-}
-
-impl Drawable for Texture {
-    fn draw(&mut self, ctx: &Context) -> MgiResult<()> {
-        let canvas = ctx.canvas();
-
-        if self.raw.is_none() {
-            return Err(format!(
-                "The associated raw texture was not loaded successfully for `{}`",
-                self.name
-            )
-            .into());
-        }
-
-        // Get raw texture
-        let raw = self.raw.as_ref().unwrap();
-
-        // Get source if it exists
-        let src = if let Some(src) = &self.src {
-            let src: sdl2::rect::Rect = src.into();
-            Some(src)
-        } else {
-            None
-        };
-
-        // Get destination if it exists
-        let dest = if let Some(src) = &self.dest {
-            let src: sdl2::rect::Rect = src.into();
-            Some(src)
-        } else {
-            None
-        };
-
-        canvas.borrow_mut().copy_ex(
-            raw,
-            src,
-            dest,
-            self.rotation.to_degrees() as f64,
-            None,
-            false,
-            false,
-        )?;
-
-        Ok(())
     }
 }

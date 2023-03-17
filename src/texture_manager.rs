@@ -7,10 +7,11 @@ use sdl2::{
 };
 
 use crate::{
-    drawable::Rectangle,
-    prelude::{MgiResult, Rotation},
+    drawable::{Drawable, Rectangle},
+    prelude::{Context, MgiResult, Rotation},
 };
 
+// TODO: Add abitlity to change opacity of texture
 pub(crate) struct Texture {
     pub(crate) name: String,
     pub(crate) path: String,
@@ -18,6 +19,51 @@ pub(crate) struct Texture {
     pub(crate) src: Option<Rectangle>,
     pub(crate) dest: Option<Rectangle>,
     pub(crate) rotation: Rotation,
+}
+
+impl Drawable for Texture {
+    fn draw(&mut self, ctx: &Context) -> MgiResult<()> {
+        let canvas = ctx.canvas();
+
+        if self.raw.is_none() {
+            return Err(format!(
+                "The associated raw texture was not loaded successfully for `{}`",
+                self.name
+            )
+            .into());
+        }
+
+        // Get raw texture
+        let raw = self.raw.as_ref().unwrap();
+
+        // Get source if it exists
+        let src = if let Some(src) = &self.src {
+            let src: sdl2::rect::Rect = src.into();
+            Some(src)
+        } else {
+            None
+        };
+
+        // Get destination if it exists
+        let dest = if let Some(src) = &self.dest {
+            let src: sdl2::rect::Rect = src.into();
+            Some(src)
+        } else {
+            None
+        };
+
+        canvas.borrow_mut().copy_ex(
+            raw,
+            src,
+            dest,
+            self.rotation.to_degrees() as f64,
+            None,
+            false,
+            false,
+        )?;
+
+        Ok(())
+    }
 }
 
 pub struct TextureManager {

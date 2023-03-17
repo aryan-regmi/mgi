@@ -2,12 +2,15 @@ use sdl2::pixels::Color;
 
 use crate::prelude::{Rectangle, Rotation, Vec2};
 
+// TODO: Add support for name tilesets inside tilemaps (instead of usize, and convert the name to
+// usize)
 pub struct Tile {
     pub(crate) rect: Rectangle,
     pub(crate) rotation: Rotation,
     pub(crate) texture_idx: (usize, usize),
 }
 
+// TODO: Add support for named tilesets (finding tileset index in tilemap using the name)
 pub struct TileSet {
     /// Vector of tile types (texture names)
     tile_types: Vec<String>,
@@ -45,7 +48,8 @@ pub struct TileMap {
     pub(crate) tile_placement_fn: Option<TilePlacementFn>,
 }
 
-// TODO: Implement layers for tilemaps correctly!
+// TODO: Make this builder so the tile_placement_fn is set first!
+// TODO: Add update tile function
 impl TileMap {
     pub fn new(nrows: usize, ncols: usize, tile_size: (usize, usize)) -> Self {
         Self {
