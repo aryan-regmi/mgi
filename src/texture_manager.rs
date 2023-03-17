@@ -1,4 +1,4 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use sdl2::{
     image::LoadTexture,
@@ -11,11 +11,10 @@ use crate::{
     prelude::{Context, MgiResult, Rotation},
 };
 
-// TODO: Add abitlity to change opacity of texture
 pub(crate) struct Texture {
     pub(crate) name: String,
     pub(crate) path: String,
-    pub(crate) raw: Option<Rc<TextureRaw>>,
+    pub(crate) raw: Option<Rc<RefCell<TextureRaw>>>,
     pub(crate) src: Option<Rectangle>,
     pub(crate) dest: Option<Rectangle>,
     pub(crate) rotation: Rotation,
@@ -53,7 +52,7 @@ impl Drawable for Texture {
         };
 
         canvas.borrow_mut().copy_ex(
-            raw,
+            &raw.borrow(),
             src,
             dest,
             self.rotation.to_degrees() as f64,
@@ -94,12 +93,12 @@ impl TextureManager {
 
     pub(crate) fn load_textures(&mut self) -> MgiResult<()> {
         for texture in self.textures.iter_mut() {
-            texture.raw = Some(Rc::new(
+            texture.raw = Some(Rc::new(RefCell::new(
                 self.texture_creator
                     .as_ref()
                     .unwrap()
                     .load_texture(&texture.path)?,
-            ));
+            )));
         }
 
         Ok(())

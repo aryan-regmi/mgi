@@ -22,17 +22,19 @@ impl Game for MyGame {
     }
 
     fn render(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
-        ctx.draw_texture("bg", None, None, None, 0)?;
+        ctx.draw_texture("bg", None, None, None, None, None, 0)?;
 
         ctx.draw_texture(
             "person",
             None,
             Some(Rectangle::new((400, 520).into(), 128, 128, Color::WHITE)),
             Some(Rotation::Degrees(30.)),
+            None,
+            None,
             2,
         )?;
 
-        ctx.draw_tilemap(0, 1);
+        ctx.draw_tilemap(0, None, Some(0.5), 0);
 
         Ok(())
     }
