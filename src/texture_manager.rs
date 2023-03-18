@@ -44,6 +44,7 @@ impl TextureManager {
         Ok(())
     }
 
+    #[allow(unused)]
     pub(crate) fn get_texture(&self, name: &str) -> Option<&RawTexture> {
         for (i, tex_info) in self.texture_info.iter().enumerate() {
             if tex_info.name == name {

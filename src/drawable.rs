@@ -105,17 +105,8 @@ impl MgiContext {
         raw_texture.set_alpha_mod((255. * alpha) as u8);
 
         // Draw the texture
-        canvas.copy_ex(
-            raw_texture,
-            src,
-            Some(dest),
-            rotation,
-            dest.center(),
-            false,
-            false,
-        )?;
+        canvas.copy_ex(raw_texture, src, Some(dest), rotation, None, false, false)?;
         canvas.set_draw_color(self.clear_color);
-        // canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Ok(())
     }

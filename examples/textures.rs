@@ -31,7 +31,7 @@ impl Game for TestGame {
             0.,
             0.8,
         )?;
-        ctx.draw_texture("person", None, Rect::new(400, 620, 128, 128), 0., 1.0)?;
+        ctx.draw_texture("person", None, Rect::new(400, 620, 128, 128), 10., 1.0)?;
 
         Ok(())
     }
