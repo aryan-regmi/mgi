@@ -1,17 +1,11 @@
 use mgi::prelude::*;
 
-struct MyGame {
+struct TestGame {
     running: bool,
 }
 
-impl MyGame {
-    fn hello_world() {
-        println!("HELLO_WORLD!");
-    }
-}
-
-impl Game for MyGame {
-    fn init() -> Self {
+impl Game for TestGame {
+    fn setup() -> Self {
         Self { running: true }
     }
 
@@ -19,37 +13,34 @@ impl Game for MyGame {
         self.running
     }
 
-    fn update(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
-        if ctx.is_keydown(Keycode::Escape) || ctx.is_keydown(Keycode::Backspace) {
+    fn handle_input(&mut self, ctx: &mut MgiContext) -> mgi::MgiResult<()> {
+        if ctx.key_down(Keycode::Escape) {
             self.running = false;
         }
 
         Ok(())
     }
 
-    fn render(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
-        const BACKGROUND: usize = 0;
-        const FOREGROUND: usize = 1;
+    fn update(&mut self, _ctx: &mut MgiContext) -> mgi::MgiResult<()> {
+        Ok(())
+    }
 
-        let (w, h) = (400, 400);
+    fn render(&mut self, ctx: &mut MgiContext) -> mgi::MgiResult<()> {
+        ctx.set_clear_color(Color::RGB(100, 100, 100));
 
-        let pos = (300, 200).into();
-        let mut rect = Rectangle::new(pos, w as u32, h as u32, Color::BLUE);
-        rect.fill(false);
-        ctx.draw(rect, FOREGROUND);
+        ctx.draw_rect(200, 200, 400, 400, Color::RED, 1.0)?;
 
-        let pos = (ctx.size().x / 2 - w / 2, ctx.size().y / 2 - h / 2).into();
-        let rect = Rectangle::new(pos, w as u32, h as u32, Color::RED);
-        ctx.draw(rect, BACKGROUND);
+        // ctx.fill_rect(300, 300, 200, 200, Color::BLUE, 0.5)?;
+        ctx.fill_rect(300, 300, 200, 200, Color::BLUE, 1.0)?;
+
+        ctx.draw_line((0, 0), (800, 800), Color::GREEN, 1.0)?;
 
         Ok(())
     }
 }
 
 fn main() -> MgiResult<()> {
-    GameBuilder::<MyGame>::init("Hello World", (800, 800))?
-        .add_startup_system(MyGame::hello_world)
-        .run()?;
+    GameBuilder::<TestGame>::init("Hello World", 800, 800)?.run()?;
 
     Ok(())
 }

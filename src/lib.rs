@@ -1,19 +1,19 @@
-pub mod context;
-pub mod drawable;
-pub mod game_builder;
-pub mod texture_manager;
-pub mod tilemap;
-pub mod utils;
+use std::error::Error;
 
-pub(crate) mod resource_manager;
+pub mod context;
+pub mod game_builder;
 
 pub mod prelude {
-    pub use crate::context::Context;
-    pub use crate::drawable::Rectangle;
+    pub use crate::context::*;
     pub use crate::game_builder::*;
-    pub use crate::texture_manager::*;
-    pub use crate::tilemap::*;
-    pub use crate::utils::*;
+    pub use crate::MgiResult;
 
-    pub use sdl2::{keyboard::Keycode, pixels::Color};
+    pub use sdl2::keyboard::Keycode;
+    pub use sdl2::pixels::Color;
 }
+
+pub type MgiResult<T> = Result<T, Box<dyn Error>>;
+
+pub struct TextureManager {}
+
+pub struct LayerManager {}

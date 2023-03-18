@@ -1,165 +1,154 @@
-use crate::context::{Context, Renderer};
-use crate::prelude::TileMap;
-use crate::resource_manager::ResourceManager;
-use crate::texture_manager::TextureManager;
-use crate::{prelude::MgiResult, utils::Vec2};
-use sdl2::{event::Event, pixels::Color, Sdl, VideoSubsystem};
+use sdl2::{event::Event, pixels::Color};
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
+use crate::{
+    context::{Inputs, MgiContext, MgiInnerContext},
+    LayerManager, MgiResult, TextureManager,
+};
+
 pub trait Game {
-    fn init() -> Self;
+    fn setup() -> Self;
     fn is_running(&self) -> bool;
-    fn update(&mut self, ctx: &mut Context) -> MgiResult<()>;
-    fn render(&mut self, ctx: &mut Context) -> MgiResult<()>;
+    fn handle_input(&mut self, ctx: &mut MgiContext) -> MgiResult<()>;
+    fn update(&mut self, ctx: &mut MgiContext) -> MgiResult<()>;
+    fn render(&mut self, ctx: &mut MgiContext) -> MgiResult<()>;
+}
+
+struct GameBuilderState {
+    texture_manager_added: bool,
+    layer_manager_added: bool,
 }
 
 pub struct GameBuilder<T: Game> {
     title: String,
-    size: Vec2,
+    width: u32,
+    height: u32,
 
-    sdl_ctx: Sdl,
-    video_sys: VideoSubsystem,
+    ctx: MgiContext,
+    game_obj: T,
+    state: GameBuilderState,
 
-    startup_systems: Vec<fn()>,
-    resource_manager: ResourceManager,
-    game: T,
+    fps: u32, // TODO: Add a tick/update rate too
 }
 
 impl<T: Game> GameBuilder<T> {
-    pub fn init(title: &str, size: (u32, u32)) -> MgiResult<Self> {
-        let sdl_ctx = sdl2::init()?;
-        let video_sys = sdl_ctx.video()?;
-
+    pub fn init(title: &str, width: u32, height: u32) -> MgiResult<Self> {
         Ok(Self {
             title: title.into(),
-            size: size.into(),
-            sdl_ctx,
-            video_sys,
-            startup_systems: Vec::new(),
-            resource_manager: ResourceManager::new(None, None),
-            game: T::init(),
+            width,
+            height,
+            ctx: MgiContext {
+                inner: Rc::new(RefCell::new(MgiInnerContext {
+                    canvas: None,
+                    texture_manager: None,
+                    layer_manager: None,
+                    inputs: Inputs {
+                        key_down: vec![],
+                        key_up: vec![],
+                    },
+                })),
+                clear_color: Color::WHITE,
+            },
+            game_obj: T::setup(),
+            state: GameBuilderState {
+                texture_manager_added: false,
+                layer_manager_added: false,
+            },
+            fps: 60,
         })
     }
 
-    pub fn fullscreen(self) -> Self {
-        self
+    pub fn set_fps(mut self, fps: u32) {
+        self.fps = fps;
     }
 
-    pub fn resizeable(self) -> Self {
-        self
-    }
+    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> MgiResult<Self> {
+        if self.state.texture_manager_added == false {
+            self.ctx.inner.borrow_mut().texture_manager = Some(texture_manager);
+            self.state.texture_manager_added = true;
 
-    pub fn add_startup_system(mut self, system: fn()) -> Self {
-        self.startup_systems.push(system);
-        self
-    }
-
-    pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> Self {
-        self.resource_manager.texture_manager = Some(Rc::new(RefCell::new(texture_manager)));
-        self
-    }
-
-    /// The ID of the TileMap is its index in the  tilemap vector
-    pub fn add_tilemap(mut self, mut tilemap: TileMap) -> Self {
-        // Initalize tilemap_manager if it doesn't exist
-        if let None = self.resource_manager.tilemap_manager {
-            self.resource_manager.tilemap_manager = Some(Rc::new(RefCell::new(Vec::new())));
+            return Ok(self);
         }
 
-        let tilemap_manager = self.resource_manager.tilemap_manager.as_ref().unwrap();
+        return Err("Only one TextureManager can be added to a GameBuilder".into());
+    }
 
-        // Set tilemap ID
-        let tilemap_id = tilemap_manager.borrow().len();
-        tilemap.id = tilemap_id;
+    pub fn add_layer_manager(mut self, layer_manager: LayerManager) -> MgiResult<Self> {
+        if self.state.layer_manager_added == false {
+            self.ctx.inner.borrow_mut().layer_manager = Some(layer_manager);
+            self.state.layer_manager_added = true;
 
-        // Add tilemap to tilemap_manager
-        tilemap_manager.borrow_mut().push(tilemap);
+            return Ok(self);
+        }
 
-        self
+        return Err("Only one TextureManager can be added to a GameBuilder".into());
     }
 
     pub fn run(mut self) -> MgiResult<()> {
-        // Create window
-        let window = self
-            .video_sys
-            .window(&self.title, self.size.x as u32, self.size.y as u32)
+        // Initalize SDL
+        let sdl_ctx = sdl2::init()?;
+        let video_sys = sdl_ctx.video()?;
+        let window = video_sys
+            .window(&self.title, self.width, self.height)
             .position_centered()
             .opengl()
             .build()
             .map_err(|e| e.to_string())?;
-        let canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+        let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+        canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
+        canvas.set_draw_color(self.ctx.clear_color);
 
-        // Run startup systems
-        for system in self.startup_systems {
-            system()
-        }
+        // Add canvas to context
+        self.ctx.inner.borrow_mut().canvas = Some(canvas);
 
-        let mut ctx = Context {
-            size: self.size,
-            clear_color: Color::WHITE,
-            key_down: Vec::new(),
-            renderer: Renderer {
-                canvas: Rc::new(RefCell::new(canvas)),
-                layers: Rc::new(RefCell::new(Vec::new())),
-            },
-            resource_manager: self.resource_manager.clone(),
-        };
+        // Create event pump
+        let mut event_pump = sdl_ctx.event_pump()?;
 
-        // Load textures
-        if let Some(tm) = &self.resource_manager.texture_manager {
-            tm.borrow_mut().texture_creator = Some(ctx.canvas().borrow().texture_creator());
-            tm.borrow_mut().load_textures()?;
-        }
-
-        // Generate all tilemaps
-        if let Some(tm) = &self.resource_manager.tilemap_manager {
-            for tilemap in tm.borrow_mut().iter_mut() {
-                tilemap.generate();
-            }
-        }
-
-        ctx.canvas().borrow_mut().set_draw_color(ctx.clear_color);
-        ctx.canvas().borrow_mut().clear();
-        ctx.canvas().borrow_mut().present();
-        let mut event_pump = self.sdl_ctx.event_pump()?;
-        'gameloop: while self.game.is_running() {
-            // Handle events
+        // Game loop
+        while self.game_obj.is_running() {
             for event in event_pump.poll_iter() {
+                if let Event::Quit { .. } = &event {
+                    break;
+                }
+
                 match event {
-                    Event::Quit { timestamp: _ } => {
-                        break 'gameloop;
-                    }
+                    Event::KeyDown {
+                        keycode: Some(key), ..
+                    } => self.ctx.inner.borrow_mut().inputs.key_down.push(key),
 
-                    Event::KeyDown { keycode, .. } => {
-                        if let Some(key) = keycode {
-                            ctx.key_down.push(key);
-                        }
-                    }
+                    Event::KeyUp {
+                        keycode: Some(key), ..
+                    } => self.ctx.inner.borrow_mut().inputs.key_up.push(key),
 
-                    _ => {}
+                    // TODO: Handle mouse inputs!
+                    _ => (),
                 }
+
+                self.game_obj.handle_input(&mut self.ctx)?;
+
+                // Remove keys from inputs once they're handled
+                self.ctx.inner.borrow_mut().inputs.key_up = vec![];
+                self.ctx.inner.borrow_mut().inputs.key_down = vec![];
             }
 
-            self.game.update(&mut ctx)?;
+            // Clear the screen
+            self.ctx.inner.borrow_mut().canvas.as_mut().unwrap().clear();
 
-            // The render function doesnt actually render: it just determines the layers to render
-            // stuff in, their textures, and their, displayed positions
-            self.game.render(&mut ctx)?;
+            // Update and render the game_obj
+            self.game_obj.update(&mut self.ctx)?;
+            self.game_obj.render(&mut self.ctx)?;
 
-            for layer in ctx.layers().borrow_mut().iter_mut() {
-                for drawable in layer.iter_mut() {
-                    drawable.draw(&ctx)?;
-                }
-            }
+            // Display changes to the window
+            self.ctx
+                .inner
+                .borrow_mut()
+                .canvas
+                .as_mut()
+                .unwrap()
+                .present();
 
-            // // canvas.copy(&texture, None, None)?;
-            // canvas.set_draw_color(Color::RED);
-            // canvas.fill_rect(Rect::new(0, 0, 200, 200))?;
-            // canvas.set_draw_color(Color::WHITE);
-
-            ctx.canvas().borrow_mut().present();
-            ctx.key_down = vec![]; // Reset keys pressed
-            std::thread::sleep(Duration::new(0, 1_000_000_000u32 / 60)); // 60fps
+            // Sleep to maintain fps
+            std::thread::sleep(Duration::new(0, 1_000_000_000 / self.fps));
         }
 
         Ok(())

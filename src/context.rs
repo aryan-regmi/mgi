@@ -1,226 +1,106 @@
-use crate::prelude::MgiResult;
-use crate::prelude::Rectangle;
-use crate::prelude::Rotation;
-use crate::resource_manager::ResourceManager;
-use crate::texture_manager::Texture;
+use crate::{LayerManager, MgiResult, TextureManager};
+use sdl2::{keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window};
 use std::{cell::RefCell, rc::Rc};
 
-use sdl2::{keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
-
-use crate::{drawable::Drawable, prelude::Vec2};
-
-pub(crate) struct Renderer {
-    pub(crate) canvas: Rc<RefCell<Canvas<Window>>>,
-
-    pub(crate) layers: Rc<RefCell<Vec<Vec<Box<dyn Drawable>>>>>,
-}
-
-pub struct Context {
-    pub(crate) size: Vec2,
+pub struct MgiContext {
+    pub(crate) inner: Rc<RefCell<MgiInnerContext>>,
     pub(crate) clear_color: Color,
-    pub(crate) key_down: Vec<Keycode>,
-    pub(crate) renderer: Renderer,
-    pub(crate) resource_manager: ResourceManager,
 }
 
-impl Context {
-    pub fn size(&self) -> Vec2 {
-        self.size
+pub(crate) struct Inputs {
+    pub(crate) key_down: Vec<Keycode>,
+    pub(crate) key_up: Vec<Keycode>,
+}
+
+pub(crate) struct MgiInnerContext {
+    pub(crate) canvas: Option<Canvas<Window>>,
+    pub(crate) texture_manager: Option<TextureManager>,
+    pub(crate) layer_manager: Option<LayerManager>,
+    pub(crate) inputs: Inputs,
+}
+
+impl MgiContext {
+    pub fn key_down(&self, key: Keycode) -> bool {
+        self.inner.borrow().inputs.key_down.contains(&key)
     }
 
-    pub fn is_keydown(&self, key: Keycode) -> bool {
-        self.key_down.contains(&key)
+    pub fn key_up(&self, key: Keycode) -> bool {
+        self.inner.borrow().inputs.key_up.contains(&key)
     }
 
-    pub(crate) fn canvas(&self) -> Rc<RefCell<Canvas<Window>>> {
-        Rc::clone(&self.renderer.canvas)
+    pub fn set_clear_color(&mut self, color: Color) {
+        self.clear_color = color;
     }
 
-    pub(crate) fn layers(&self) -> Rc<RefCell<Vec<Vec<Box<dyn Drawable>>>>> {
-        Rc::clone(&self.renderer.layers)
-    }
-
-    pub fn draw<T: Drawable + 'static>(&mut self, drawable: T, layer: usize) {
-        let layers = self.layers();
-
-        if layers.borrow_mut().len() > layer {
-            layers.borrow_mut()[layer].push(Box::new(drawable));
-        } else {
-            layers.borrow_mut().push(vec![Box::new(drawable)])
-        }
-    }
-
-    pub fn draw_texture_pro(
-        &mut self,
-        texture_name: &str,
-        src: Option<Rectangle>,
-        dest: Option<Rectangle>,
-        rotation: Option<Rotation>,
-        color_tint: Option<Color>,
-        alpha_tint: Option<f32>,
-        layer: usize,
+    pub fn draw_rect(
+        &self,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        mut color: Color,
+        alpha: f32,
     ) -> MgiResult<()> {
-        // NOTE: The texture must be set before hand!
-        let mut texture_manager = self
-            .resource_manager
-            .texture_manager
-            .as_ref()
-            .unwrap()
-            .borrow_mut();
-        let texture = texture_manager.get_texture_mut(texture_name);
+        color.a = (255. * alpha) as u8;
+        let rect = Rect::new(x, y, width, height);
 
-        if let Some(texture) = texture {
-            let layers = self.layers();
+        let mut ctx = self.inner.borrow_mut();
+        let canvas = ctx
+            .canvas
+            .as_mut()
+            .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
 
-            let raw = if let Some(r) = &texture.raw {
-                if let Some(alpha) = alpha_tint {
-                    r.borrow_mut().set_alpha_mod((255. * alpha) as u8);
-                }
-                if let Some(color) = color_tint {
-                    r.borrow_mut().set_color_mod(color.r, color.g, color.b);
-                }
-
-                Some(Rc::clone(r))
-            } else {
-                None
-            };
-
-            let rotation = if let Some(rot) = rotation {
-                rot
-            } else {
-                Rotation::Radians(0.0)
-            };
-
-            if layers.borrow_mut().len() > layer {
-                layers.borrow_mut()[layer].push(Box::new(Texture {
-                    name: texture.name.to_owned(),
-                    path: texture.path.to_owned(),
-                    raw,
-                    src,
-                    rotation,
-                    dest,
-                }));
-            } else {
-                layers.borrow_mut().push(vec![Box::new(Texture {
-                    name: texture.name.to_owned(),
-                    path: texture.path.to_owned(),
-                    raw,
-                    src,
-                    dest,
-                    rotation,
-                })])
-            }
-        }
+        canvas.set_draw_color(color);
+        canvas.draw_rect(rect)?;
+        canvas.set_draw_color(self.clear_color);
 
         Ok(())
     }
 
-    pub fn draw_texture(
-        &mut self,
-        texture_name: &str,
-        dest: Option<Rectangle>,
-        layer: usize,
+    pub fn fill_rect(
+        &self,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        mut color: Color,
+        alpha: f32,
     ) -> MgiResult<()> {
-        // NOTE: The texture must be set before hand!
-        let mut texture_manager = self
-            .resource_manager
-            .texture_manager
-            .as_ref()
-            .unwrap()
-            .borrow_mut();
-        let texture = texture_manager.get_texture_mut(texture_name);
+        color.a = (255. * alpha) as u8;
+        let rect = Rect::new(x, y, width, height);
 
-        if let Some(texture) = texture {
-            let layers = self.layers();
+        let mut ctx = self.inner.borrow_mut();
+        let canvas = ctx
+            .canvas
+            .as_mut()
+            .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
 
-            let raw = if let Some(r) = &texture.raw {
-                Some(Rc::clone(r))
-            } else {
-                None
-            };
-
-            let rotation = Rotation::Radians(0.0);
-
-            if layers.borrow_mut().len() > layer {
-                layers.borrow_mut()[layer].push(Box::new(Texture {
-                    name: texture.name.to_owned(),
-                    path: texture.path.to_owned(),
-                    raw,
-                    src: None,
-                    dest,
-                    rotation,
-                }));
-            } else {
-                layers.borrow_mut().push(vec![Box::new(Texture {
-                    name: texture.name.to_owned(),
-                    path: texture.path.to_owned(),
-                    raw,
-                    src: None,
-                    dest,
-                    rotation,
-                })])
-            }
-        }
+        canvas.set_draw_color(color);
+        canvas.fill_rect(rect)?;
+        canvas.set_draw_color(self.clear_color);
 
         Ok(())
     }
 
-    // TODO: Add simpler function with less params for ease of use
-    // TODO: Choose position to place the tilemap too! (add offset to tile.rect)
-    // TODO: Don't render tilemap that is outside the screen
-    // TODO: Add scrolling tilemap? (Need to add camera first)
-    pub fn draw_tilemap(
-        &mut self,
-        tilemap_id: usize,
-        color_tint: Option<Color>,
-        alpha_tint: Option<f32>,
-        layer: usize,
-    ) {
-        // TODO: Proper error handling
-        let tilemap_manager = self.resource_manager.tilemap_manager.as_ref().unwrap();
-        let texture_manager = self.resource_manager.texture_manager.as_ref().unwrap();
-        let tilemap = &tilemap_manager.borrow()[tilemap_id];
+    pub fn draw_line(
+        &self,
+        start: (i32, i32),
+        end: (i32, i32),
+        mut color: Color,
+        alpha: f32,
+    ) -> MgiResult<()> {
+        color.a = (255. * alpha) as u8;
 
-        for tile in &tilemap.tiles {
-            // NOTE: The texture must be set before hand!
-            let texture_name = tilemap.get_texture_name(tile.texture_idx);
+        let mut ctx = self.inner.borrow_mut();
+        let canvas = ctx
+            .canvas
+            .as_mut()
+            .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
 
-            if let Some(texture) = texture_manager.borrow_mut().get_texture_mut(texture_name) {
-                let layers = self.layers();
+        canvas.set_draw_color(color);
+        canvas.draw_line(start, end)?;
+        canvas.set_draw_color(self.clear_color);
 
-                let raw = if let Some(r) = &texture.raw {
-                    if let Some(alpha) = alpha_tint {
-                        r.borrow_mut().set_alpha_mod((255. * alpha) as u8);
-                    }
-                    if let Some(color) = color_tint {
-                        r.borrow_mut().set_color_mod(color.r, color.g, color.b);
-                    }
-
-                    Some(Rc::clone(r))
-                } else {
-                    None
-                };
-
-                if layers.borrow_mut().len() > layer {
-                    layers.borrow_mut()[layer].push(Box::new(Texture {
-                        name: texture.name.to_owned(),
-                        path: texture.path.to_owned(),
-                        raw,
-                        src: None,
-                        dest: Some(tile.rect.clone()),
-                        rotation: tile.rotation,
-                    }));
-                } else {
-                    layers.borrow_mut().push(vec![Box::new(Texture {
-                        name: texture.name.to_owned(),
-                        path: texture.path.to_owned(),
-                        raw,
-                        src: None,
-                        dest: Some(tile.rect.clone()),
-                        rotation: tile.rotation,
-                    })])
-                }
-            }
-        }
+        Ok(())
     }
 }
