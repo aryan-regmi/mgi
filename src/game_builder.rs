@@ -3,7 +3,8 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     context::{Inputs, MgiContext, MgiInnerContext},
-    LayerManager, MgiResult, TextureManager,
+    prelude::TextureManager,
+    LayerManager, MgiResult,
 };
 
 pub trait Game {
@@ -37,8 +38,6 @@ impl<T: Game> GameBuilder<T> {
             ctx: MgiContext {
                 inner: Rc::new(RefCell::new(MgiInnerContext {
                     canvas: None,
-                    texture_manager: None,
-                    layer_manager: None,
                     inputs: Inputs {
                         key_down: vec![],
                         key_up: vec![],
@@ -49,6 +48,8 @@ impl<T: Game> GameBuilder<T> {
                     },
                 })),
                 clear_color: Color::WHITE,
+                texture_manager: None,
+                layer_manager: None,
             },
             game_obj: T::setup(),
             state: GameBuilderState {
@@ -60,7 +61,7 @@ impl<T: Game> GameBuilder<T> {
 
     pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> MgiResult<Self> {
         if self.state.texture_manager_added == false {
-            self.ctx.inner.borrow_mut().texture_manager = Some(texture_manager);
+            self.ctx.texture_manager = Some(RefCell::new(texture_manager));
             self.state.texture_manager_added = true;
 
             return Ok(self);
@@ -71,7 +72,7 @@ impl<T: Game> GameBuilder<T> {
 
     pub fn add_layer_manager(mut self, layer_manager: LayerManager) -> MgiResult<Self> {
         if self.state.layer_manager_added == false {
-            self.ctx.inner.borrow_mut().layer_manager = Some(layer_manager);
+            self.ctx.layer_manager = Some(layer_manager);
             self.state.layer_manager_added = true;
 
             return Ok(self);
@@ -102,6 +103,11 @@ impl<T: Game> GameBuilder<T> {
             .map_err(|e| e.to_string())?;
         canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
         canvas.set_draw_color(self.ctx.clear_color);
+
+        // Load all textures
+        if let Some(tm) = self.ctx.texture_manager.as_mut() {
+            tm.borrow_mut().load_textures(canvas.texture_creator())?;
+        }
 
         // Add canvas to context
         self.ctx.inner.borrow_mut().canvas = Some(canvas);

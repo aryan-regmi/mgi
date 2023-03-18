@@ -79,20 +79,23 @@ fn main() -> MgiResult<()> {
         }))
         .build();
 
+
     let mut layer_manager = LayerManager::new();
+    // Layer holds hashmap of name and drawable
     layer_manager.add_layer(Layer::init("bg_layer", 0).set_opacity(1.0).add_object(
         "bg_tex",
         Texture {
             name: "bg",
-            position: (0, 0),
-            rotation: 0.,
+            src: None,
+            dest: Rect::new(0,0,32,32), // SDL2::Rect
+            rotation: 0., // In degrees
         },
     ));
     layer_manager.add_layer(
         Layer::init("tilemap_layer", 1)
             .set_opacity(0.5)
             .add_object("tilemap", tilemap),
-    );
+    )
 
     GameBuilder::<MyGame>::init("TileMap", (800, 800))?
         .add_texture_manager(texture_manager)
