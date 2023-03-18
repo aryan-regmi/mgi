@@ -1,7 +1,5 @@
 use crate::{LayerManager, MgiResult, TextureManager};
-use sdl2::{
-    keyboard::Keycode, mouse::MouseButton, pixels::Color, rect::Rect, render::Canvas, video::Window,
-};
+use sdl2::{keyboard::Keycode, pixels::Color, rect::Rect, render::Canvas, video::Window};
 use std::{cell::RefCell, rc::Rc};
 
 pub struct MgiContext {

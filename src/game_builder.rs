@@ -1,5 +1,5 @@
-use sdl2::{event::Event, pixels::Color};
-use std::{cell::RefCell, rc::Rc, time::Duration};
+use sdl2::{event::Event, pixels::Color, video::GLProfile};
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     context::{Inputs, MgiContext, MgiInnerContext},
@@ -26,8 +26,6 @@ pub struct GameBuilder<T: Game> {
     ctx: MgiContext,
     game_obj: T,
     state: GameBuilderState,
-
-    fps: u32,
 }
 
 impl<T: Game> GameBuilder<T> {
@@ -57,12 +55,7 @@ impl<T: Game> GameBuilder<T> {
                 texture_manager_added: false,
                 layer_manager_added: false,
             },
-            fps: 60,
         })
-    }
-
-    pub fn set_fps(mut self, fps: u32) {
-        self.fps = fps;
     }
 
     pub fn add_texture_manager(mut self, texture_manager: TextureManager) -> MgiResult<Self> {
@@ -91,13 +84,22 @@ impl<T: Game> GameBuilder<T> {
         // Initalize SDL
         let sdl_ctx = sdl2::init()?;
         let video_sys = sdl_ctx.video()?;
+        let gl_attr = video_sys.gl_attr();
+        gl_attr.set_context_profile(GLProfile::Core); // Don't use deprecated OpenGL functions
+        gl_attr.set_context_version(3, 2); // Set the OpenGL context version (OpenGL 3.2)
+        gl_attr.set_multisample_buffers(1); // Enable anti-aliasing
+        gl_attr.set_multisample_samples(4);
         let window = video_sys
             .window(&self.title, self.width, self.height)
             .position_centered()
             .opengl()
             .build()
             .map_err(|e| e.to_string())?;
-        let mut canvas = window.into_canvas().build().map_err(|e| e.to_string())?;
+        let mut canvas = window
+            .into_canvas()
+            .present_vsync()
+            .build()
+            .map_err(|e| e.to_string())?;
         canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
         canvas.set_draw_color(self.ctx.clear_color);
 
@@ -178,9 +180,6 @@ impl<T: Game> GameBuilder<T> {
                 .as_mut()
                 .unwrap()
                 .present();
-
-            // Sleep to maintain fps
-            std::thread::sleep(Duration::new(0, 1_000_000_000 / self.fps));
         }
 
         Ok(())
