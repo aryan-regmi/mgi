@@ -2,65 +2,11 @@ use crate::prelude::Color;
 use crate::prelude::MgiContext;
 use crate::MgiResult;
 use sdl2::rect::Rect;
-use std::rc::Rc;
-
-/// Rect Implementation
-impl MgiContext {
-    pub fn draw_rect(
-        &self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
-        mut color: Color,
-        alpha: f32,
-    ) -> MgiResult<()> {
-        color.a = (255. * alpha) as u8;
-        let rect = Rect::new(x, y, width, height);
-
-        let mut ctx = self.inner.borrow_mut();
-        let canvas = ctx
-            .canvas
-            .as_mut()
-            .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
-
-        canvas.set_draw_color(color);
-        canvas.draw_rect(rect)?;
-        canvas.set_draw_color(self.clear_color);
-
-        Ok(())
-    }
-
-    pub fn fill_rect(
-        &self,
-        x: i32,
-        y: i32,
-        width: u32,
-        height: u32,
-        mut color: Color,
-        alpha: f32,
-    ) -> MgiResult<()> {
-        color.a = (255. * alpha) as u8;
-        let rect = Rect::new(x, y, width, height);
-
-        let mut ctx = self.inner.borrow_mut();
-        let canvas = ctx
-            .canvas
-            .as_mut()
-            .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
-
-        canvas.set_draw_color(color);
-        canvas.fill_rect(rect)?;
-        canvas.set_draw_color(self.clear_color);
-
-        Ok(())
-    }
-}
 
 /// Line Implementation
 impl MgiContext {
     pub fn draw_line(
-        &self,
+        &mut self,
         start: (i32, i32),
         end: (i32, i32),
         mut color: Color,
@@ -68,8 +14,7 @@ impl MgiContext {
     ) -> MgiResult<()> {
         color.a = (255. * alpha) as u8;
 
-        let mut ctx = self.inner.borrow_mut();
-        let canvas = ctx
+        let canvas = self
             .canvas
             .as_mut()
             .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
@@ -82,6 +27,58 @@ impl MgiContext {
     }
 }
 
+/// Rect Implementation
+impl MgiContext {
+    pub fn draw_rect(
+        &mut self,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        mut color: Color,
+        alpha: f32,
+    ) -> MgiResult<()> {
+        color.a = (255. * alpha) as u8;
+        let rect = Rect::new(x, y, width, height);
+
+        let canvas = self
+            .canvas
+            .as_mut()
+            .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
+
+        canvas.set_draw_color(color);
+        canvas.draw_rect(rect)?;
+        canvas.set_draw_color(self.clear_color);
+
+        Ok(())
+    }
+
+    pub fn fill_rect(
+        &mut self,
+        x: i32,
+        y: i32,
+        width: u32,
+        height: u32,
+        mut color: Color,
+        alpha: f32,
+    ) -> MgiResult<()> {
+        color.a = (255. * alpha) as u8;
+        let rect = Rect::new(x, y, width, height);
+
+        let canvas = self
+            .canvas
+            .as_mut()
+            .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
+
+        canvas.set_draw_color(color);
+        canvas.fill_rect(rect)?;
+        canvas.set_draw_color(self.clear_color);
+
+        Ok(())
+    }
+}
+
+/// Texture Implementation
 impl MgiContext {
     pub fn draw_texture(
         &mut self,
@@ -91,11 +88,8 @@ impl MgiContext {
         rotation: f64,
         alpha: f32,
     ) -> MgiResult<()> {
-        let inner = Rc::clone(&self.inner);
-
         // Get canvas
-        let mut ctx = inner.borrow_mut();
-        let canvas = ctx
+        let canvas = self
             .canvas
             .as_mut()
             .ok_or("Canvas was not initalized properly in GameBuilder::run()")?;
@@ -120,6 +114,8 @@ impl MgiContext {
             false,
             false,
         )?;
+        canvas.set_draw_color(self.clear_color);
+        // canvas.set_blend_mode(sdl2::render::BlendMode::Blend);
 
         Ok(())
     }

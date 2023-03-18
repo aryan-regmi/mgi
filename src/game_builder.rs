@@ -1,8 +1,8 @@
 use sdl2::{event::Event, pixels::Color, video::GLProfile};
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 
 use crate::{
-    context::{Inputs, MgiContext, MgiInnerContext},
+    context::{Inputs, MgiContext},
     prelude::TextureManager,
     LayerManager, MgiResult,
 };
@@ -36,17 +36,15 @@ impl<T: Game> GameBuilder<T> {
             width,
             height,
             ctx: MgiContext {
-                inner: Rc::new(RefCell::new(MgiInnerContext {
-                    canvas: None,
-                    inputs: Inputs {
-                        key_down: vec![],
-                        key_up: vec![],
-                        mouse_pos: (0, 0),
-                        left_click: false,
-                        right_click: false,
-                        middle_click: false,
-                    },
-                })),
+                canvas: None,
+                inputs: Inputs {
+                    key_down: vec![],
+                    key_up: vec![],
+                    mouse_pos: (0, 0),
+                    left_click: false,
+                    right_click: false,
+                    middle_click: false,
+                },
                 clear_color: Color::WHITE,
                 texture_manager: None,
                 layer_manager: None,
@@ -110,7 +108,7 @@ impl<T: Game> GameBuilder<T> {
         }
 
         // Add canvas to context
-        self.ctx.inner.borrow_mut().canvas = Some(canvas);
+        self.ctx.canvas = Some(canvas);
 
         // Create event pump
         let mut event_pump = sdl_ctx.event_pump()?;
@@ -125,39 +123,25 @@ impl<T: Game> GameBuilder<T> {
                 match event {
                     Event::KeyDown {
                         keycode: Some(key), ..
-                    } => self.ctx.inner.borrow_mut().inputs.key_down.push(key),
+                    } => self.ctx.inputs.key_down.push(key),
 
                     Event::KeyUp {
                         keycode: Some(key), ..
-                    } => self.ctx.inner.borrow_mut().inputs.key_up.push(key),
+                    } => self.ctx.inputs.key_up.push(key),
 
-                    Event::MouseMotion { x, y, .. } => {
-                        self.ctx.inner.borrow_mut().inputs.mouse_pos = (x, y)
-                    }
+                    Event::MouseMotion { x, y, .. } => self.ctx.inputs.mouse_pos = (x, y),
 
                     Event::MouseButtonDown { mouse_btn, .. } => match mouse_btn {
-                        sdl2::mouse::MouseButton::Left => {
-                            self.ctx.inner.borrow_mut().inputs.left_click = true
-                        }
-                        sdl2::mouse::MouseButton::Middle => {
-                            self.ctx.inner.borrow_mut().inputs.middle_click = true
-                        }
-                        sdl2::mouse::MouseButton::Right => {
-                            self.ctx.inner.borrow_mut().inputs.right_click = true
-                        }
+                        sdl2::mouse::MouseButton::Left => self.ctx.inputs.left_click = true,
+                        sdl2::mouse::MouseButton::Middle => self.ctx.inputs.middle_click = true,
+                        sdl2::mouse::MouseButton::Right => self.ctx.inputs.right_click = true,
                         _ => (),
                     },
 
                     Event::MouseButtonUp { mouse_btn, .. } => match mouse_btn {
-                        sdl2::mouse::MouseButton::Left => {
-                            self.ctx.inner.borrow_mut().inputs.left_click = false
-                        }
-                        sdl2::mouse::MouseButton::Middle => {
-                            self.ctx.inner.borrow_mut().inputs.middle_click = false
-                        }
-                        sdl2::mouse::MouseButton::Right => {
-                            self.ctx.inner.borrow_mut().inputs.right_click = false
-                        }
+                        sdl2::mouse::MouseButton::Left => self.ctx.inputs.left_click = false,
+                        sdl2::mouse::MouseButton::Middle => self.ctx.inputs.middle_click = false,
+                        sdl2::mouse::MouseButton::Right => self.ctx.inputs.right_click = false,
                         _ => (),
                     },
 
@@ -168,24 +152,18 @@ impl<T: Game> GameBuilder<T> {
                 self.game_obj.update(&mut self.ctx)?;
 
                 // Remove keys from inputs once they're handled
-                self.ctx.inner.borrow_mut().inputs.key_up = vec![];
-                self.ctx.inner.borrow_mut().inputs.key_down = vec![];
+                self.ctx.inputs.key_up = vec![];
+                self.ctx.inputs.key_down = vec![];
             }
 
             // Clear the screen
-            self.ctx.inner.borrow_mut().canvas.as_mut().unwrap().clear();
+            self.ctx.canvas.as_mut().unwrap().clear();
 
             // Render the game_obj
             self.game_obj.render(&mut self.ctx)?;
 
-            // Display changes to the window
-            self.ctx
-                .inner
-                .borrow_mut()
-                .canvas
-                .as_mut()
-                .unwrap()
-                .present();
+            // Render changes to the window
+            self.ctx.canvas.as_mut().unwrap().present();
         }
 
         Ok(())

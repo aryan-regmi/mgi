@@ -1,9 +1,10 @@
 use crate::{prelude::TextureManager, LayerManager};
 use sdl2::{keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 
 pub struct MgiContext {
-    pub(crate) inner: Rc<RefCell<MgiInnerContext>>,
+    pub(crate) canvas: Option<Canvas<Window>>,
+    pub(crate) inputs: Inputs,
     pub(crate) clear_color: Color,
     pub(crate) texture_manager: Option<RefCell<TextureManager>>,
     pub(crate) layer_manager: Option<LayerManager>,
@@ -18,34 +19,29 @@ pub(crate) struct Inputs {
     pub(crate) middle_click: bool,
 }
 
-pub(crate) struct MgiInnerContext {
-    pub(crate) canvas: Option<Canvas<Window>>,
-    pub(crate) inputs: Inputs,
-}
-
 impl MgiContext {
     pub fn key_down(&self, key: Keycode) -> bool {
-        self.inner.borrow().inputs.key_down.contains(&key)
+        self.inputs.key_down.contains(&key)
     }
 
     pub fn key_up(&self, key: Keycode) -> bool {
-        self.inner.borrow().inputs.key_up.contains(&key)
+        self.inputs.key_up.contains(&key)
     }
 
     pub fn mouse_pos(&self) -> (i32, i32) {
-        self.inner.borrow().inputs.mouse_pos
+        self.inputs.mouse_pos
     }
 
     pub fn left_click(&self) -> bool {
-        self.inner.borrow().inputs.left_click
+        self.inputs.left_click
     }
 
     pub fn right_click(&self) -> bool {
-        self.inner.borrow().inputs.right_click
+        self.inputs.right_click
     }
 
     pub fn middle_click(&self) -> bool {
-        self.inner.borrow().inputs.middle_click
+        self.inputs.middle_click
     }
 
     pub fn set_clear_color(&mut self, color: Color) {

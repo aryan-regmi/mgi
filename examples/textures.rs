@@ -22,10 +22,16 @@ impl Game for TestGame {
     }
 
     fn render(&mut self, ctx: &mut MgiContext) -> mgi::MgiResult<()> {
-        let _ = ctx;
+        ctx.set_clear_color(Color::BLACK);
 
-        // TODO: Draw the texture!
-        ctx.draw_texture("bg", None, Rect::new(0, 0, 800, 800), 0., 1.)?;
+        ctx.draw_texture(
+            "bg",
+            Some(Rect::new(0, 0, 600, 800)),
+            Rect::new(0, 0, 800, 800),
+            0.,
+            0.8,
+        )?;
+        ctx.draw_texture("person", None, Rect::new(400, 620, 128, 128), 0., 1.0)?;
 
         Ok(())
     }
@@ -34,8 +40,9 @@ impl Game for TestGame {
 fn main() -> MgiResult<()> {
     let mut texture_manager = TextureManager::new();
     texture_manager.add_texture("bg", "./examples/assets/bg.png");
+    texture_manager.add_texture("person", "./examples/assets/person.png");
 
-    GameBuilder::<TestGame>::init("Hello World", 800, 800)?
+    GameBuilder::<TestGame>::init("Textures", 800, 800)?
         .add_texture_manager(texture_manager)?
         .run()?;
 
