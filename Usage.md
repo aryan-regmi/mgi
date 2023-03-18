@@ -1,3 +1,6 @@
+***The physics engine (collider, etc) should run on a separate thread ***
+
+
 ```rust
 
 use mgi::prelude::*;
@@ -44,8 +47,6 @@ impl Game for MyGame {
     }
 
     fn render(&mut self, ctx: &mut mgi::prelude::Context) -> MgiResult<()> {
-        // NOTE: All drawables will have a `set_opacity` function to set the opacity
-
         // ctx.draw_rect(x, y, width, height, color, alpha)
         // ctx.draw_line(x1, y1, x2, y2, color, alpha)
 

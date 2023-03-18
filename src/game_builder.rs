@@ -9,7 +9,6 @@ use crate::{
 pub trait Game {
     fn setup() -> Self;
     fn is_running(&self) -> bool;
-    fn handle_input(&mut self, ctx: &mut MgiContext) -> MgiResult<()>;
     fn update(&mut self, ctx: &mut MgiContext) -> MgiResult<()>;
     fn render(&mut self, ctx: &mut MgiContext) -> MgiResult<()>;
 }
@@ -28,7 +27,7 @@ pub struct GameBuilder<T: Game> {
     game_obj: T,
     state: GameBuilderState,
 
-    fps: u32, // TODO: Add a tick/update rate too
+    fps: u32,
 }
 
 impl<T: Game> GameBuilder<T> {
@@ -45,6 +44,10 @@ impl<T: Game> GameBuilder<T> {
                     inputs: Inputs {
                         key_down: vec![],
                         key_up: vec![],
+                        mouse_pos: (0, 0),
+                        left_click: false,
+                        right_click: false,
+                        middle_click: false,
                     },
                 })),
                 clear_color: Color::WHITE,
@@ -120,11 +123,41 @@ impl<T: Game> GameBuilder<T> {
                         keycode: Some(key), ..
                     } => self.ctx.inner.borrow_mut().inputs.key_up.push(key),
 
-                    // TODO: Handle mouse inputs!
+                    Event::MouseMotion { x, y, .. } => {
+                        self.ctx.inner.borrow_mut().inputs.mouse_pos = (x, y)
+                    }
+
+                    Event::MouseButtonDown { mouse_btn, .. } => match mouse_btn {
+                        sdl2::mouse::MouseButton::Left => {
+                            self.ctx.inner.borrow_mut().inputs.left_click = true
+                        }
+                        sdl2::mouse::MouseButton::Middle => {
+                            self.ctx.inner.borrow_mut().inputs.middle_click = true
+                        }
+                        sdl2::mouse::MouseButton::Right => {
+                            self.ctx.inner.borrow_mut().inputs.right_click = true
+                        }
+                        _ => (),
+                    },
+
+                    Event::MouseButtonUp { mouse_btn, .. } => match mouse_btn {
+                        sdl2::mouse::MouseButton::Left => {
+                            self.ctx.inner.borrow_mut().inputs.left_click = false
+                        }
+                        sdl2::mouse::MouseButton::Middle => {
+                            self.ctx.inner.borrow_mut().inputs.middle_click = false
+                        }
+                        sdl2::mouse::MouseButton::Right => {
+                            self.ctx.inner.borrow_mut().inputs.right_click = false
+                        }
+                        _ => (),
+                    },
+
+                    // TODO: Add scroll wheel handling
                     _ => (),
                 }
 
-                self.game_obj.handle_input(&mut self.ctx)?;
+                self.game_obj.update(&mut self.ctx)?;
 
                 // Remove keys from inputs once they're handled
                 self.ctx.inner.borrow_mut().inputs.key_up = vec![];
@@ -134,8 +167,7 @@ impl<T: Game> GameBuilder<T> {
             // Clear the screen
             self.ctx.inner.borrow_mut().canvas.as_mut().unwrap().clear();
 
-            // Update and render the game_obj
-            self.game_obj.update(&mut self.ctx)?;
+            // Render the game_obj
             self.game_obj.render(&mut self.ctx)?;
 
             // Display changes to the window

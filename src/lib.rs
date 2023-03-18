@@ -9,6 +9,7 @@ pub mod prelude {
     pub use crate::MgiResult;
 
     pub use sdl2::keyboard::Keycode;
+    pub use sdl2::mouse::MouseButton;
     pub use sdl2::pixels::Color;
 }
 
