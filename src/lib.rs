@@ -4,11 +4,13 @@ mod drawable;
 
 pub mod context;
 pub mod game_builder;
+pub mod layer_manager;
 pub mod texture_manager;
 
 pub mod prelude {
     pub use crate::context::*;
     pub use crate::game_builder::*;
+    pub use crate::layer_manager::*;
     pub use crate::texture_manager::*;
     pub use crate::MgiResult;
 
@@ -19,5 +21,3 @@ pub mod prelude {
 }
 
 pub type MgiResult<T> = Result<T, Box<dyn Error>>;
-
-pub struct LayerManager {}

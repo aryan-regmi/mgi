@@ -1,4 +1,4 @@
-use crate::{prelude::TextureManager, LayerManager};
+use crate::prelude::{LayerManager, TextureManager};
 use sdl2::{keyboard::Keycode, pixels::Color, render::Canvas, video::Window};
 use std::cell::RefCell;
 

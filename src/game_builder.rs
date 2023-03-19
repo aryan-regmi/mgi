@@ -1,11 +1,10 @@
-use sdl2::{event::Event, pixels::Color, video::GLProfile};
-use std::cell::RefCell;
-
 use crate::{
     context::{Inputs, MgiContext},
-    prelude::TextureManager,
-    LayerManager, MgiResult,
+    prelude::{LayerManager, TextureManager},
+    MgiResult,
 };
+use sdl2::{event::Event, pixels::Color, video::GLProfile};
+use std::cell::RefCell;
 
 pub trait Game {
     fn setup() -> Self;
