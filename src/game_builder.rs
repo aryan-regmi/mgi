@@ -68,14 +68,14 @@ impl<T: Game> GameBuilder<T> {
     }
 
     pub fn add_layer_manager(mut self, layer_manager: LayerManager) -> MgiResult<Self> {
-        if self.state.layer_manager_added == false {
-            self.ctx.layer_manager = Some(layer_manager);
+        if !self.state.layer_manager_added {
+            self.ctx.layer_manager = Some(RefCell::new(layer_manager));
             self.state.layer_manager_added = true;
 
             return Ok(self);
         }
 
-        return Err("Only one TextureManager can be added to a GameBuilder".into());
+        Err("Only one TextureManager can be added to a GameBuilder".into())
     }
 
     pub fn run(mut self) -> MgiResult<()> {

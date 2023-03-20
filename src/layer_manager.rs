@@ -37,13 +37,14 @@ impl LayerBuilder {
     }
 }
 
+#[derive(Default)]
 pub struct LayerManager {
     layers: Vec<Layer>,
 }
 
 impl LayerManager {
     pub fn new() -> Self {
-        Self { layers: vec![] }
+        Self::default()
     }
 
     pub fn add_layer(&mut self, layer: Layer) {

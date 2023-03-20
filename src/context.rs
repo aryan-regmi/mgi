@@ -7,7 +7,7 @@ pub struct MgiContext {
     pub(crate) inputs: Inputs,
     pub(crate) clear_color: Color,
     pub(crate) texture_manager: Option<RefCell<TextureManager>>,
-    pub(crate) layer_manager: Option<LayerManager>,
+    pub(crate) layer_manager: Option<RefCell<LayerManager>>,
 }
 
 pub(crate) struct Inputs {
