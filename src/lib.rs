@@ -1,23 +1,13 @@
 use std::error::Error;
 
-mod drawable;
-
-pub mod context;
 pub mod game_builder;
-pub mod layer_manager;
-pub mod texture_manager;
 
 pub mod prelude {
-    pub use crate::context::*;
     pub use crate::game_builder::*;
-    pub use crate::layer_manager::*;
-    pub use crate::texture_manager::*;
-    pub use crate::MgiResult;
+    pub use crate::*;
 
-    pub use sdl2::keyboard::Keycode;
-    pub use sdl2::mouse::MouseButton;
-    pub use sdl2::pixels::Color;
-    pub use sdl2::rect::Rect;
+    pub use mgics::prelude::SystemType::*;
+    pub use mgics::prelude::*;
 }
 
 pub type MgiResult<T> = Result<T, Box<dyn Error>>;

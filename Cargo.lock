@@ -41,9 +41,14 @@ checksum = "201de327520df007757c1f0adce6e827fe8562fbc28bfd9c15571c66ca1f5f79"
 name = "mgi"
 version = "0.1.0"
 dependencies = [
+ "mgics",
  "rand",
  "sdl2",
 ]
+
+[[package]]
+name = "mgics"
+version = "0.1.0"
 
 [[package]]
 name = "ppv-lite86"
